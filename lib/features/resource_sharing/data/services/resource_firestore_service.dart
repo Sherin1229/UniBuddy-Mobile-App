@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/resource_model.dart';
 
 class ResourceFirestoreService {
-  final _col = FirebaseFirestore.instance.collection('resources');
+  CollectionReference get _col => FirebaseFirestore.instance.collection('resources');
 
   Stream<List<ResourceModel>> fetchResources({String? subject}) {
     Query query = _col.orderBy('uploadedAt', descending: true);
