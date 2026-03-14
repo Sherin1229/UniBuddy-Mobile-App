@@ -1,6 +1,4 @@
-import 'package:flutter/material.dart';
 import '../../data/models/resource_model.dart';
-import '../../data/repositories/resource_repository.dart';
 
 class ResourceLibraryState {
   final List<ResourceModel> resources;
