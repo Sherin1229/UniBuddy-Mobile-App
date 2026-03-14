@@ -1,9 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../register/register_page.dart';
 
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+class RegisterPage extends StatelessWidget {
+  const RegisterPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -69,9 +68,9 @@ class LoginPage extends StatelessWidget {
                       ),
                     ),
                     
-                    const SizedBox(height: 32.0),
+                    const SizedBox(height: 16.0),
                     
-                    // Glassmorphism Login Card
+                    // Glassmorphism Register Card
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
                       child: ClipRRect(
@@ -98,7 +97,7 @@ class LoginPage extends StatelessWidget {
                                 // Title
                                 const Center(
                                   child: Text(
-                                    'Welcome Back',
+                                    'Create Account',
                                     style: TextStyle(
                                       color: primaryText,
                                       fontSize: 26.0,
@@ -107,6 +106,35 @@ class LoginPage extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 32.0),
+
+                                // Full Name Input Field
+                                TextField(
+                                  decoration: InputDecoration(
+                                    hintText: 'Full Name',
+                                    hintStyle: const TextStyle(color: secondaryText),
+                                    filled: true,
+                                    fillColor: cardBackground,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16.0),
+                                      borderSide: const BorderSide(color: borderColor),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16.0),
+                                      borderSide: const BorderSide(color: borderColor),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16.0),
+                                      borderSide: const BorderSide(color: primaryBrand, width: 2.0),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 20.0, 
+                                      vertical: 18.0,
+                                    ),
+                                  ),
+                                  keyboardType: TextInputType.name,
+                                  textInputAction: TextInputAction.next,
+                                ),
+                                const SizedBox(height: 20.0),
                                 
                                 // Email Input Field
                                 TextField(
@@ -162,11 +190,40 @@ class LoginPage extends StatelessWidget {
                                       vertical: 18.0,
                                     ),
                                   ),
+                                  textInputAction: TextInputAction.next,
+                                ),
+                                const SizedBox(height: 20.0),
+
+                                // Confirm Password Input Field
+                                TextField(
+                                  obscureText: true,
+                                  decoration: InputDecoration(
+                                    hintText: 'Confirm Password',
+                                    hintStyle: const TextStyle(color: secondaryText),
+                                    filled: true,
+                                    fillColor: cardBackground,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16.0),
+                                      borderSide: const BorderSide(color: borderColor),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16.0),
+                                      borderSide: const BorderSide(color: borderColor),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16.0),
+                                      borderSide: const BorderSide(color: primaryBrand, width: 2.0),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 20.0, 
+                                      vertical: 18.0,
+                                    ),
+                                  ),
                                   textInputAction: TextInputAction.done,
                                 ),
                                 const SizedBox(height: 32.0),
                                 
-                                // Login Button
+                                // Register Button
                                 SizedBox(
                                   width: double.infinity,
                                   height: 56.0,
@@ -182,7 +239,7 @@ class LoginPage extends StatelessWidget {
                                       ),
                                     ),
                                     child: const Text(
-                                      'Login',
+                                      'Register',
                                       style: TextStyle(
                                         fontSize: 18.0,
                                         fontWeight: FontWeight.bold,
@@ -198,14 +255,14 @@ class LoginPage extends StatelessWidget {
                       ),
                     ),
                     
-                    const SizedBox(height: 48.0),
+                    const SizedBox(height: 32.0),
                     
                     // Bottom Section
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          "Don't have an account? ",
+                          "Already have an account? ",
                           style: TextStyle(
                             color: Colors.white70,
                             fontSize: 16.0,
@@ -213,13 +270,10 @@ class LoginPage extends StatelessWidget {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const RegisterPage()),
-                            );
+                            Navigator.pop(context);
                           },
                           child: const Text(
-                            'Register',
+                            'Login',
                             style: TextStyle(
                               color: accentButton,
                               fontSize: 16.0,
