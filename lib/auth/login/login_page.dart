@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../register/register_page.dart';
+import '../../home_page.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -171,7 +172,14 @@ class LoginPage extends StatelessWidget {
                                   width: double.infinity,
                                   height: 56.0,
                                   child: ElevatedButton(
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const HomePage(),
+                                        ),
+                                      );
+                                    },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: accentButton,
                                       foregroundColor: Colors.white,
