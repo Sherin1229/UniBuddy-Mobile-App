@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'features/resource_sharing/presentation/pages/resource_library_page.dart';
 import 'features/assignment_help/presentation/pages/assignment_help_page.dart';
 import 'features/study_group/presentation/pages/study_group_page.dart';
+import 'features/settings/presentation/pages/settings_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,12 +18,13 @@ class _HomePageState extends State<HomePage> {
     ResourceLibraryPage(),
     AssignmentHelpPage(),
     StudyGroupPage(),
+    SettingsPage(),
   ];
 
   @override
   Widget build(BuildContext context) {
     const Color primaryBrand = Color(0xFF0F766E);
-    
+
     return Scaffold(
       body: _pages[_currentIndex],
       bottomNavigationBar: NavigationBar(
@@ -48,6 +50,11 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.group_outlined),
             selectedIcon: Icon(Icons.group, color: primaryBrand),
             label: 'Study Group',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings, color: primaryBrand),
+            label: 'Settings',
           ),
         ],
       ),
