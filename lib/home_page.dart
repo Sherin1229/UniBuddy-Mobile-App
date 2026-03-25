@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'features/resource_sharing/presentation/pages/resource_library_page.dart';
+import 'features/resource_sharing/presentation/pages/resource_form_page.dart';
 import 'features/assignment_help/presentation/pages/assignment_help_page.dart';
 import 'features/study_group/presentation/pages/study_group_page.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
@@ -26,8 +27,26 @@ class _HomePageState extends State<HomePage> {
     const Color primaryBrand = Color(0xFF0F766E);
 
     return Scaffold(
+      extendBody: true,
       body: _pages[_currentIndex],
+      floatingActionButton: _currentIndex == 0
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ResourceFormPage()),
+                );
+              },
+              backgroundColor: primaryBrand,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.upload_file_outlined),
+              label: const Text('Upload'),
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: NavigationBar(
+        backgroundColor: const Color(0xF2FFFFFF),
+        surfaceTintColor: Colors.transparent,
+        elevation: 10,
         selectedIndex: _currentIndex,
         onDestinationSelected: (int index) {
           setState(() {
