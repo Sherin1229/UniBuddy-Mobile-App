@@ -10,6 +10,7 @@ import '../widgets/loading_resources_view.dart';
 import '../widgets/error_resources_view.dart';
 import 'resource_details_page.dart';
 import 'resource_form_page.dart';
+import '../../../../shared/widgets/animated_app_background.dart';
 
 const _teal = Color(0xFF3D9E8C);
 
@@ -21,12 +22,6 @@ class ResourceLibraryPage extends StatefulWidget {
 }
 
 class _ResourceLibraryPageState extends State<ResourceLibraryPage> {
-  Future<void> _openCreateForm() async {
-    await Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const ResourceFormPage()));
-  }
-
   Future<void> _openDetails(ResourceModel resource) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
@@ -92,7 +87,7 @@ class _ResourceLibraryPageState extends State<ResourceLibraryPage> {
     final state = provider.state;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: _teal,
         foregroundColor: Colors.white,
@@ -111,49 +106,108 @@ class _ResourceLibraryPageState extends State<ResourceLibraryPage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openCreateForm,
-        backgroundColor: _teal,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.upload_file_outlined),
-        label: const Text('Upload'),
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Stack(
         children: [
-          ResourceSearchBar(onChanged: provider.setSearch),
-          const SizedBox(height: 4),
-          SubjectFilterChips(
-            filters: ResourceLibraryProvider.filters,
-            selected: state.selectedFilter,
-            onSelected: provider.setFilter,
+          const Positioned.fill(
+            child: AnimatedAppBackground(
+              durationSeconds: 28,
+              motionScale: 0.55,
+              opacityScale: 0.85,
+            ),
           ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: state.isLoading
-                ? const LoadingResourcesView()
-                : state.error != null
-                ? ErrorResourcesView(
-                    message: state.error!,
-                    onRetry: provider.loadResources,
-                  )
-                : state.resources.isEmpty
-                ? const EmptyResourcesView()
-                : ListView.builder(
-                    itemCount: state.resources.length,
-                    itemBuilder: (_, i) {
-                      final resource = state.resources[i];
-                      return ResourceCard(
-                        resource: resource,
-                        onTap: () => _openDetails(resource),
-                        onEdit: () => _openEdit(resource),
-                        onDelete: () => _deleteResource(resource),
-                      );
-                    },
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    color: Colors.white.withOpacity(0.62),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.75),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
+                  child: Column(
+                    children: [
+                      ResourceSearchBar(onChanged: provider.setSearch),
+                      const SizedBox(height: 2),
+                      SubjectFilterChips(
+                        filters: ResourceLibraryProvider.filters,
+                        selected: state.selectedFilter,
+                        onSelected: provider.setFilter,
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: state.isLoading
+                    ? const LoadingResourcesView()
+                    : state.error != null
+                    ? ErrorResourcesView(
+                        message: state.error!,
+                        onRetry: provider.loadResources,
+                      )
+                    : state.resources.isEmpty
+                    ? const EmptyResourcesView()
+                    : ListView.builder(
+                        padding: const EdgeInsets.only(bottom: 90),
+                        itemCount: state.resources.length,
+                        itemBuilder: (_, i) {
+                          final resource = state.resources[i];
+                          return _AnimatedResourceTile(
+                            index: i,
+                            child: ResourceCard(
+                              resource: resource,
+                              onTap: () => _openDetails(resource),
+                              onEdit: () => _openEdit(resource),
+                              onDelete: () => _deleteResource(resource),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AnimatedResourceTile extends StatelessWidget {
+  final int index;
+  final Widget child;
+
+  const _AnimatedResourceTile({required this.index, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final duration = Duration(milliseconds: 260 + (index * 28).clamp(0, 260));
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: duration,
+      curve: Curves.easeOutCubic,
+      builder: (context, value, _) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 14 * (1 - value)),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }

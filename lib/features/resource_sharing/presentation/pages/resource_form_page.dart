@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../data/models/resource_model.dart';
 import '../state/resource_library_provider.dart';
+import '../../../../shared/widgets/animated_app_background.dart';
 
 const _teal = Color(0xFF3D9E8C);
 
@@ -117,122 +118,148 @@ class _ResourceFormPageState extends State<ResourceFormPage> {
         .isSubmitting;
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: _teal,
         foregroundColor: Colors.white,
         title: Text(_isEditing ? 'Edit Resource' : 'Upload Resource'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildTextField(
-                controller: _titleController,
-                label: 'Title',
-                validator: (value) => (value == null || value.trim().isEmpty)
-                    ? 'Title is required'
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: _selectedCategory,
-                items: _categories
-                    .map(
-                      (category) => DropdownMenuItem(
-                        value: category,
-                        child: Text(category),
-                      ),
-                    )
-                    .toList(),
-                onChanged: isSubmitting
-                    ? null
-                    : (value) {
-                        if (value != null) {
-                          setState(() => _selectedCategory = value);
-                        }
-                      },
-                decoration: _inputDecoration('Category'),
-              ),
-              const SizedBox(height: 12),
-              _buildTextField(
-                controller: _subjectController,
-                label: 'Subject',
-                validator: (value) => (value == null || value.trim().isEmpty)
-                    ? 'Subject is required'
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              _buildTextField(
-                controller: _descriptionController,
-                label: 'Description',
-                maxLines: 3,
-                validator: (value) => (value == null || value.trim().isEmpty)
-                    ? 'Description is required'
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              _buildTextField(
-                controller: _uploadedByController,
-                label: 'Uploaded By',
-                validator: (value) => (value == null || value.trim().isEmpty)
-                    ? 'Uploader name is required'
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildTextField(
-                      controller: _fileTypeController,
-                      label: 'File Type',
-                      validator: (value) =>
-                          (value == null || value.trim().isEmpty)
-                          ? 'File type is required'
-                          : null,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildTextField(
-                      controller: _fileSizeKbController,
-                      label: 'Size (KB)',
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        final parsed = int.tryParse((value ?? '').trim());
-                        if (parsed == null || parsed <= 0) {
-                          return 'Enter a valid size';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: isSubmitting ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _teal,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+      body: Stack(
+        children: [
+          const Positioned.fill(child: AnimatedAppBackground()),
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Card(
+                elevation: 6,
+                color: Colors.white.withOpacity(0.92),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                child: isSubmitting
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildTextField(
+                        controller: _titleController,
+                        label: 'Title',
+                        validator: (value) =>
+                            (value == null || value.trim().isEmpty)
+                            ? 'Title is required'
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: _selectedCategory,
+                        items: _categories
+                            .map(
+                              (category) => DropdownMenuItem(
+                                value: category,
+                                child: Text(category),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: isSubmitting
+                            ? null
+                            : (value) {
+                                if (value != null) {
+                                  setState(() => _selectedCategory = value);
+                                }
+                              },
+                        decoration: _inputDecoration('Category'),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTextField(
+                        controller: _subjectController,
+                        label: 'Subject',
+                        validator: (value) =>
+                            (value == null || value.trim().isEmpty)
+                            ? 'Subject is required'
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTextField(
+                        controller: _descriptionController,
+                        label: 'Description',
+                        maxLines: 3,
+                        validator: (value) =>
+                            (value == null || value.trim().isEmpty)
+                            ? 'Description is required'
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTextField(
+                        controller: _uploadedByController,
+                        label: 'Uploaded By',
+                        validator: (value) =>
+                            (value == null || value.trim().isEmpty)
+                            ? 'Uploader name is required'
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              controller: _fileTypeController,
+                              label: 'File Type',
+                              validator: (value) =>
+                                  (value == null || value.trim().isEmpty)
+                                  ? 'File type is required'
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildTextField(
+                              controller: _fileSizeKbController,
+                              label: 'Size (KB)',
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                final parsed = int.tryParse(
+                                  (value ?? '').trim(),
+                                );
+                                if (parsed == null || parsed <= 0) {
+                                  return 'Enter a valid size';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: isSubmitting ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _teal,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
-                      )
-                    : Text(_isEditing ? 'Update Resource' : 'Upload Resource'),
+                        child: isSubmitting
+                            ? const SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                _isEditing
+                                    ? 'Update Resource'
+                                    : 'Upload Resource',
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
