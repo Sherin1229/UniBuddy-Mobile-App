@@ -19,10 +19,12 @@ class ResourceCard extends StatelessWidget {
 
   String _timeAgo(DateTime date) {
     final diff = DateTime.now().difference(date);
-    if (diff.inDays > 0)
+    if (diff.inDays > 0) {
       return '${diff.inDays} day${diff.inDays > 1 ? 's' : ''} ago';
-    if (diff.inHours > 0)
+    }
+    if (diff.inHours > 0) {
       return '${diff.inHours} hour${diff.inHours > 1 ? 's' : ''} ago';
+    }
     return 'Just now';
   }
 
