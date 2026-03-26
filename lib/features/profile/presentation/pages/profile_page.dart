@@ -214,7 +214,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: _selectedYear,
+                      initialValue: _selectedYear,
                       decoration: _inputDecoration(
                         label: 'Academic Year *',
                         icon: Icons.calendar_month_outlined,
