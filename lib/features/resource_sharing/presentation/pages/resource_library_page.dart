@@ -9,7 +9,6 @@ import '../widgets/empty_resources_view.dart';
 import '../widgets/loading_resources_view.dart';
 import '../widgets/error_resources_view.dart';
 import 'resource_details_page.dart';
-import 'resource_form_page.dart';
 import '../../../../shared/widgets/animated_app_background.dart';
 
 const _teal = Color(0xFF3D9E8C);
@@ -28,49 +27,6 @@ class _ResourceLibraryPageState extends State<ResourceLibraryPage> {
         builder: (_) => ResourceDetailsPage(resource: resource),
       ),
     );
-  }
-
-  Future<void> _openEdit(ResourceModel resource) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ResourceFormPage(existingResource: resource),
-      ),
-    );
-  }
-
-  Future<void> _deleteResource(ResourceModel resource) async {
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Delete Resource'),
-        content: Text('Delete "${resource.title}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-
-    if (shouldDelete != true || !mounted) {
-      return;
-    }
-
-    final message = await context
-        .read<ResourceLibraryProvider>()
-        .deleteResource(resource.id);
-    if (!mounted || message == null) {
-      return;
-    }
-
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -170,8 +126,6 @@ class _ResourceLibraryPageState extends State<ResourceLibraryPage> {
                             child: ResourceCard(
                               resource: resource,
                               onTap: () => _openDetails(resource),
-                              onEdit: () => _openEdit(resource),
-                              onDelete: () => _deleteResource(resource),
                             ),
                           );
                         },
