@@ -1,38 +1,85 @@
 import 'package:flutter/material.dart';
-import '../../../../shared/widgets/animated_app_background.dart';
+import '../../../../app_colors.dart';
+import '../widgets/help_card.dart';
 
 class AssignmentHelpPage extends StatelessWidget {
   const AssignmentHelpPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final requests = [
+      {
+        'title': 'Java Assignment Help',
+        'subject': 'OOP concepts',
+        'status': 'OPEN',
+      },
+      {
+        'title': 'Flutter UI Help',
+        'subject': 'Need help with layouts',
+        'status': 'SOLVED',
+      },
+      {
+        'title': 'Database ER Diagram',
+        'subject': 'Urgent support needed',
+        'status': 'OVERDUE',
+      },
+    ];
+
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Stack(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.primary,
+        elevation: 0,
+        title: const Text(
+          'KUSHANI TEST PAGE',
+          style: TextStyle(color: Colors.white),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: Column(
         children: [
-          const Positioned.fill(
-            child: AnimatedAppBackground(
-              durationSeconds: 14,
-              motionScale: 1.2,
-              opacityScale: 1.15,
-            ),
-          ),
-          Center(
-            child: Card(
-              elevation: 8,
-              color: Colors.white.withOpacity(0.9),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+            decoration: const BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(24),
               ),
-              margin: const EdgeInsets.symmetric(horizontal: 24),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 28, vertical: 26),
-                child: Text(
-                  'Assignment Help Seeking\n(Coming Soon)',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Search assignments...',
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
                 ),
               ),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: requests.length,
+              itemBuilder: (context, index) {
+                final item = requests[index];
+                return HelpCard(
+                  title: item['title']!,
+                  subject: item['subject']!,
+                  status: item['status']!,
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${item['title']} clicked'),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],
