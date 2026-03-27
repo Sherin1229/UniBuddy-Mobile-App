@@ -32,10 +32,10 @@ class _AssignmentHelpPageState extends State<AssignmentHelpPage> {
         id: '1',
         title: 'Database Assignment',
         subject: 'Database Systems',
-        ownerName: 'Kushani A',
+        ownerName: 'Kushani A', // owner
         description: 'I need help understanding JOIN queries for my assignment. Can someone explain with examples?',
         deadline: DateTime(2024, 6, 20),
-        status: HelpRequestStatus.overdue,
+        status: HelpRequestStatus.open, // set to open
         views: 5,
         likes: 5,
         comments: 2,

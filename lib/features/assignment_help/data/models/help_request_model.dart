@@ -7,7 +7,7 @@ class HelpRequest {
   final String ownerName;
   final String description;
   final DateTime deadline;
-  final HelpRequestStatus status;
+  HelpRequestStatus status;
   final int views;
   final int likes;
   final int comments;
@@ -21,7 +21,7 @@ class HelpRequest {
     required this.ownerName,
     required this.description,
     required this.deadline,
-    required this.status,
+    this.status = HelpRequestStatus.open,
     this.views = 0,
     this.likes = 0,
     this.comments = 0,
