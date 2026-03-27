@@ -1,21 +1,21 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../register/register_page.dart';
+
 import '../../home_page.dart';
 
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+class RegisterPage extends StatelessWidget {
+  const RegisterPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     // Brand Colors
     const Color primaryBrand = Color(0xFF0F766E);
     const Color accentButton = Color(0xFF14B8A6);
-    
+
     // Background Colors
     const Color cardBackground = Color(0xFFFFFFFF);
     const Color borderColor = Color(0xFFE2E8F0);
-    
+
     // Text Colors
     const Color primaryText = Color(0xFF1E293B);
     const Color secondaryText = Color(0xFF475569);
@@ -37,7 +37,9 @@ class LoginPage extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [
                 primaryBrand.withOpacity(0.7),
-                const Color(0xFF042F2E).withOpacity(0.9), // Darker teal shade for bottom
+                const Color(
+                  0xFF042F2E,
+                ).withOpacity(0.9), // Darker teal shade for bottom
               ],
             ),
           ),
@@ -69,10 +71,10 @@ class LoginPage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    
-                    const SizedBox(height: 32.0),
-                    
-                    // Glassmorphism Login Card
+
+                    const SizedBox(height: 16.0),
+
+                    // Glassmorphism Register Card
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
                       child: ClipRRect(
@@ -84,7 +86,9 @@ class LoginPage extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: cardBackground.withOpacity(0.85),
                               borderRadius: BorderRadius.circular(28.0),
-                              border: Border.all(color: Colors.white.withOpacity(0.5)),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.5),
+                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.1),
@@ -99,7 +103,7 @@ class LoginPage extends StatelessWidget {
                                 // Title
                                 const Center(
                                   child: Text(
-                                    'Welcome Back',
+                                    'Create Account',
                                     style: TextStyle(
                                       color: primaryText,
                                       fontSize: 26.0,
@@ -108,28 +112,75 @@ class LoginPage extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 32.0),
-                                
-                                // Email Input Field
+
+                                // Full Name Input Field
                                 TextField(
                                   decoration: InputDecoration(
-                                    hintText: 'Email',
-                                    hintStyle: const TextStyle(color: secondaryText),
+                                    hintText: 'Full Name',
+                                    hintStyle: const TextStyle(
+                                      color: secondaryText,
+                                    ),
                                     filled: true,
                                     fillColor: cardBackground,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: borderColor),
+                                      borderSide: const BorderSide(
+                                        color: borderColor,
+                                      ),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: borderColor),
+                                      borderSide: const BorderSide(
+                                        color: borderColor,
+                                      ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: primaryBrand, width: 2.0),
+                                      borderSide: const BorderSide(
+                                        color: primaryBrand,
+                                        width: 2.0,
+                                      ),
                                     ),
                                     contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 20.0, 
+                                      horizontal: 20.0,
+                                      vertical: 18.0,
+                                    ),
+                                  ),
+                                  keyboardType: TextInputType.name,
+                                  textInputAction: TextInputAction.next,
+                                ),
+                                const SizedBox(height: 20.0),
+
+                                // Email Input Field
+                                TextField(
+                                  decoration: InputDecoration(
+                                    hintText: 'Email',
+                                    hintStyle: const TextStyle(
+                                      color: secondaryText,
+                                    ),
+                                    filled: true,
+                                    fillColor: cardBackground,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16.0),
+                                      borderSide: const BorderSide(
+                                        color: borderColor,
+                                      ),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16.0),
+                                      borderSide: const BorderSide(
+                                        color: borderColor,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16.0),
+                                      borderSide: const BorderSide(
+                                        color: primaryBrand,
+                                        width: 2.0,
+                                      ),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 20.0,
                                       vertical: 18.0,
                                     ),
                                   ),
@@ -137,37 +188,84 @@ class LoginPage extends StatelessWidget {
                                   textInputAction: TextInputAction.next,
                                 ),
                                 const SizedBox(height: 20.0),
-                                
+
                                 // Password Input Field
                                 TextField(
                                   obscureText: true,
                                   decoration: InputDecoration(
                                     hintText: 'Password',
-                                    hintStyle: const TextStyle(color: secondaryText),
+                                    hintStyle: const TextStyle(
+                                      color: secondaryText,
+                                    ),
                                     filled: true,
                                     fillColor: cardBackground,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: borderColor),
+                                      borderSide: const BorderSide(
+                                        color: borderColor,
+                                      ),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: borderColor),
+                                      borderSide: const BorderSide(
+                                        color: borderColor,
+                                      ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: primaryBrand, width: 2.0),
+                                      borderSide: const BorderSide(
+                                        color: primaryBrand,
+                                        width: 2.0,
+                                      ),
                                     ),
                                     contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 20.0, 
+                                      horizontal: 20.0,
+                                      vertical: 18.0,
+                                    ),
+                                  ),
+                                  textInputAction: TextInputAction.next,
+                                ),
+                                const SizedBox(height: 20.0),
+
+                                // Confirm Password Input Field
+                                TextField(
+                                  obscureText: true,
+                                  decoration: InputDecoration(
+                                    hintText: 'Confirm Password',
+                                    hintStyle: const TextStyle(
+                                      color: secondaryText,
+                                    ),
+                                    filled: true,
+                                    fillColor: cardBackground,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16.0),
+                                      borderSide: const BorderSide(
+                                        color: borderColor,
+                                      ),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16.0),
+                                      borderSide: const BorderSide(
+                                        color: borderColor,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16.0),
+                                      borderSide: const BorderSide(
+                                        color: primaryBrand,
+                                        width: 2.0,
+                                      ),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 20.0,
                                       vertical: 18.0,
                                     ),
                                   ),
                                   textInputAction: TextInputAction.done,
                                 ),
                                 const SizedBox(height: 32.0),
-                                
-                                // Login Button
+
+                                // Register Button
                                 SizedBox(
                                   width: double.infinity,
                                   height: 56.0,
@@ -176,7 +274,8 @@ class LoginPage extends StatelessWidget {
                                       Navigator.pushReplacement(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => const HomePage(),
+                                          builder: (context) =>
+                                              const HomePage(),
                                         ),
                                       );
                                     },
@@ -184,13 +283,17 @@ class LoginPage extends StatelessWidget {
                                       backgroundColor: accentButton,
                                       foregroundColor: Colors.white,
                                       elevation: 8,
-                                      shadowColor: accentButton.withOpacity(0.5),
+                                      shadowColor: accentButton.withOpacity(
+                                        0.5,
+                                      ),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16.0),
+                                        borderRadius: BorderRadius.circular(
+                                          16.0,
+                                        ),
                                       ),
                                     ),
                                     child: const Text(
-                                      'Login',
+                                      'Register',
                                       style: TextStyle(
                                         fontSize: 18.0,
                                         fontWeight: FontWeight.bold,
@@ -205,15 +308,15 @@ class LoginPage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    
-                    const SizedBox(height: 48.0),
-                    
+
+                    const SizedBox(height: 32.0),
+
                     // Bottom Section
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          "Don't have an account? ",
+                          "Already have an account? ",
                           style: TextStyle(
                             color: Colors.white70,
                             fontSize: 16.0,
@@ -221,13 +324,10 @@ class LoginPage extends StatelessWidget {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const RegisterPage()),
-                            );
+                            Navigator.pop(context);
                           },
                           child: const Text(
-                            'Register',
+                            'Login',
                             style: TextStyle(
                               color: accentButton,
                               fontSize: 16.0,
