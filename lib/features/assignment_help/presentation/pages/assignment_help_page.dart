@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../shared/widgets/animated_app_background.dart';
 import '../widgets/help_card.dart';
 import '../../data/models/help_request_model.dart';
+import 'help_request_details_page.dart';
 
 class AssignmentHelpPage extends StatefulWidget {
   const AssignmentHelpPage({super.key});
@@ -301,12 +302,11 @@ class _AssignmentHelpPageState extends State<AssignmentHelpPage> {
                               return HelpCard(
                                 request: filteredRequests[index],
                                 onTap: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Opening: ${filteredRequests[index].title}',
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => HelpRequestDetailsPage(
+                                        request: filteredRequests[index],
                                       ),
-                                      duration: const Duration(seconds: 1),
                                     ),
                                   );
                                 },
