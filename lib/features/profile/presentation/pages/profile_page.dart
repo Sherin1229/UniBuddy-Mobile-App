@@ -14,18 +14,18 @@ class _ProfilePageState extends State<ProfilePage> {
   final _formKey = GlobalKey<FormState>();
   AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
 
-  final _fullNameController = TextEditingController(text: 'Alex Johnson');
+  final _fullNameController = TextEditingController(text: 'Silomy A C S');
   final _emailController = TextEditingController(
-    text: 'alex.johnson@myuni.edu',
+    text: 'it23774070@my.sliit.lk',
   );
-  final _studentIdController = TextEditingController(text: 'IT2024-1132');
+  final _studentIdController = TextEditingController(text: 'IT23774070');
   final _universityController = TextEditingController(text: 'SLIIT');
   final _facultyController = TextEditingController(
     text: 'Faculty of Computing',
   );
   final _phoneController = TextEditingController(text: '+94 71 234 5678');
   final _bioController = TextEditingController(
-    text: 'Second-year student interested in software engineering and AI.',
+    text: 'Third-year undergraduate student',
   );
 
   static const _years = [
@@ -36,7 +36,7 @@ class _ProfilePageState extends State<ProfilePage> {
     'Postgraduate',
   ];
 
-  String _selectedYear = 'Year 2';
+  String _selectedYear = 'Year 3';
 
   @override
   void dispose() {
