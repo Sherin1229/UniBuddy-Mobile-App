@@ -98,8 +98,18 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFFF0FDFA).withOpacity(0.95),
+                      const Color(0xFFDDF7F4).withOpacity(0.9),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
                   borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: const Color(0xFF99F6E4).withOpacity(0.65),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.08),
@@ -147,7 +157,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 24),
                     InkWell(
                       borderRadius: BorderRadius.circular(16),
                       onTap: () {
@@ -245,7 +255,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 30),
                     _buildField(
                       controller: _fullNameController,
                       label: 'Full Name *',
