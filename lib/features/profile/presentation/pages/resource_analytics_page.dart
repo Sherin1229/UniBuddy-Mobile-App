@@ -13,6 +13,7 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
     const _UploadedResource(
       title: 'OOP Midterm Past Paper 2023',
       subject: 'Object Oriented Programming',
+      description: 'Comprehensive past paper covering core OOP concepts.',
       views: 312,
       downloads: 148,
       likes: 84,
@@ -21,6 +22,7 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
     const _UploadedResource(
       title: 'Database Normalization Cheat Sheet',
       subject: 'Database Systems',
+      description: 'A quick reference for 1NF, 2NF, and 3NF.',
       views: 255,
       downloads: 126,
       likes: 72,
@@ -29,6 +31,7 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
     const _UploadedResource(
       title: 'Networking Layer Model Summary',
       subject: 'Computer Networks',
+      description: 'Summary of OSI and TCP/IP layers.',
       views: 184,
       downloads: 92,
       likes: 58,
@@ -37,6 +40,7 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
     const _UploadedResource(
       title: 'Flutter State Management Notes',
       subject: 'Mobile Application Development',
+      description: 'Notes on Provider, Riverpod, and Bloc.',
       views: 228,
       downloads: 109,
       likes: 91,
@@ -45,8 +49,126 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
   ];
 
   void _onEdit(_UploadedResource resource) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Edit tapped for "${resource.title}"')),
+    final titleController = TextEditingController(text: resource.title);
+    final subjectController = TextEditingController(text: resource.subject);
+    final descriptionController = TextEditingController(text: resource.description);
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.edit_note_rounded, color: Color(0xFF0F766E), size: 28),
+            SizedBox(width: 8),
+            Text(
+              'Edit Resource',
+              style: TextStyle(
+                color: Color(0xFF134E4A),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: titleController,
+                  decoration: InputDecoration(
+                    labelText: 'Resource Title',
+                    labelStyle: const TextStyle(color: Color(0xFF0F766E)),
+                    filled: true,
+                    fillColor: const Color(0xFFF0FDFA),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    prefixIcon: const Icon(Icons.title, color: Color(0xFF0F766E)),
+                  ),
+                  validator: (value) =>
+                      value == null || value.isEmpty ? 'Please enter a title' : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: subjectController,
+                  decoration: InputDecoration(
+                    labelText: 'Subject',
+                    labelStyle: const TextStyle(color: Color(0xFF0F766E)),
+                    filled: true,
+                    fillColor: const Color(0xFFF0FDFA),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    prefixIcon: const Icon(Icons.book, color: Color(0xFF0F766E)),
+                  ),
+                  validator: (value) =>
+                      value == null || value.isEmpty ? 'Please enter a subject' : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: descriptionController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: 'Description',
+                    labelStyle: const TextStyle(color: Color(0xFF0F766E)),
+                    filled: true,
+                    fillColor: const Color(0xFFF0FDFA),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    prefixIcon: const Icon(Icons.description, color: Color(0xFF0F766E)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                final index = _resources.indexOf(resource);
+                if (index != -1) {
+                  setState(() {
+                    _resources[index] = resource.copyWith(
+                      title: titleController.text,
+                      subject: subjectController.text,
+                      description: descriptionController.text,
+                    );
+                  });
+                }
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Resource updated successfully'),
+                    backgroundColor: Color(0xFF0F766E),
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0F766E),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('Save Changes'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -544,6 +666,7 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
 class _UploadedResource {
   final String title;
   final String subject;
+  final String description;
   final int views;
   final int downloads;
   final int likes;
@@ -552,9 +675,30 @@ class _UploadedResource {
   const _UploadedResource({
     required this.title,
     required this.subject,
+    required this.description,
     required this.views,
     required this.downloads,
     required this.likes,
     required this.dislikes,
   });
+
+  _UploadedResource copyWith({
+    String? title,
+    String? subject,
+    String? description,
+    int? views,
+    int? downloads,
+    int? likes,
+    int? dislikes,
+  }) {
+    return _UploadedResource(
+      title: title ?? this.title,
+      subject: subject ?? this.subject,
+      description: description ?? this.description,
+      views: views ?? this.views,
+      downloads: downloads ?? this.downloads,
+      likes: likes ?? this.likes,
+      dislikes: dislikes ?? this.dislikes,
+    );
+  }
 }
