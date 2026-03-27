@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../data/models/resource_model.dart';
-import '../../data/repositories/resource_repository.dart';
 import 'resource_library_state.dart';
 
 class ResourceLibraryProvider extends ChangeNotifier {
-  final _repo = ResourceRepository();
   ResourceLibraryState _state = const ResourceLibraryState();
 
   ResourceLibraryState get state => _state;
 
-  static const List<String> filters = ['All', 'Notes', 'Past Papers', 'Lectures'];
+  static const List<String> filters = [
+    'All',
+    'Notes',
+    'Past Papers',
+    'Lectures',
+  ];
 
   void loadResources() {
     _state = _state.copyWith(isLoading: true);
@@ -53,12 +56,21 @@ class ResourceLibraryProvider extends ChangeNotifier {
       List<ResourceModel> filtered = mockResources;
       if (_state.selectedFilter != 'All') {
         filtered = mockResources
-            .where((r) => r.subject == _state.selectedFilter || (r.subject == 'Computer Science' && _state.selectedFilter == 'Lectures'))
+            .where(
+              (r) =>
+                  r.subject == _state.selectedFilter ||
+                  (r.subject == 'Computer Science' &&
+                      _state.selectedFilter == 'Lectures'),
+            )
             .toList();
       }
       if (_state.searchQuery.isNotEmpty) {
         filtered = mockResources
-            .where((r) => r.title.toLowerCase().contains(_state.searchQuery.toLowerCase()))
+            .where(
+              (r) => r.title.toLowerCase().contains(
+                _state.searchQuery.toLowerCase(),
+              ),
+            )
             .toList();
       }
 
