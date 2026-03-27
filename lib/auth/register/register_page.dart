@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
+import '../../home_page.dart';
+
 class RegisterPage extends StatelessWidget {
   const RegisterPage({super.key});
 
@@ -9,11 +11,11 @@ class RegisterPage extends StatelessWidget {
     // Brand Colors
     const Color primaryBrand = Color(0xFF0F766E);
     const Color accentButton = Color(0xFF14B8A6);
-    
+
     // Background Colors
     const Color cardBackground = Color(0xFFFFFFFF);
     const Color borderColor = Color(0xFFE2E8F0);
-    
+
     // Text Colors
     const Color primaryText = Color(0xFF1E293B);
     const Color secondaryText = Color(0xFF475569);
@@ -35,7 +37,9 @@ class RegisterPage extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [
                 primaryBrand.withOpacity(0.7),
-                const Color(0xFF042F2E).withOpacity(0.9), // Darker teal shade for bottom
+                const Color(
+                  0xFF042F2E,
+                ).withOpacity(0.9), // Darker teal shade for bottom
               ],
             ),
           ),
@@ -67,9 +71,9 @@ class RegisterPage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 16.0),
-                    
+
                     // Glassmorphism Register Card
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -82,7 +86,9 @@ class RegisterPage extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: cardBackground.withOpacity(0.85),
                               borderRadius: BorderRadius.circular(28.0),
-                              border: Border.all(color: Colors.white.withOpacity(0.5)),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.5),
+                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.1),
@@ -111,23 +117,32 @@ class RegisterPage extends StatelessWidget {
                                 TextField(
                                   decoration: InputDecoration(
                                     hintText: 'Full Name',
-                                    hintStyle: const TextStyle(color: secondaryText),
+                                    hintStyle: const TextStyle(
+                                      color: secondaryText,
+                                    ),
                                     filled: true,
                                     fillColor: cardBackground,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: borderColor),
+                                      borderSide: const BorderSide(
+                                        color: borderColor,
+                                      ),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: borderColor),
+                                      borderSide: const BorderSide(
+                                        color: borderColor,
+                                      ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: primaryBrand, width: 2.0),
+                                      borderSide: const BorderSide(
+                                        color: primaryBrand,
+                                        width: 2.0,
+                                      ),
                                     ),
                                     contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 20.0, 
+                                      horizontal: 20.0,
                                       vertical: 18.0,
                                     ),
                                   ),
@@ -135,28 +150,37 @@ class RegisterPage extends StatelessWidget {
                                   textInputAction: TextInputAction.next,
                                 ),
                                 const SizedBox(height: 20.0),
-                                
+
                                 // Email Input Field
                                 TextField(
                                   decoration: InputDecoration(
                                     hintText: 'Email',
-                                    hintStyle: const TextStyle(color: secondaryText),
+                                    hintStyle: const TextStyle(
+                                      color: secondaryText,
+                                    ),
                                     filled: true,
                                     fillColor: cardBackground,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: borderColor),
+                                      borderSide: const BorderSide(
+                                        color: borderColor,
+                                      ),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: borderColor),
+                                      borderSide: const BorderSide(
+                                        color: borderColor,
+                                      ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: primaryBrand, width: 2.0),
+                                      borderSide: const BorderSide(
+                                        color: primaryBrand,
+                                        width: 2.0,
+                                      ),
                                     ),
                                     contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 20.0, 
+                                      horizontal: 20.0,
                                       vertical: 18.0,
                                     ),
                                   ),
@@ -164,29 +188,38 @@ class RegisterPage extends StatelessWidget {
                                   textInputAction: TextInputAction.next,
                                 ),
                                 const SizedBox(height: 20.0),
-                                
+
                                 // Password Input Field
                                 TextField(
                                   obscureText: true,
                                   decoration: InputDecoration(
                                     hintText: 'Password',
-                                    hintStyle: const TextStyle(color: secondaryText),
+                                    hintStyle: const TextStyle(
+                                      color: secondaryText,
+                                    ),
                                     filled: true,
                                     fillColor: cardBackground,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: borderColor),
+                                      borderSide: const BorderSide(
+                                        color: borderColor,
+                                      ),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: borderColor),
+                                      borderSide: const BorderSide(
+                                        color: borderColor,
+                                      ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: primaryBrand, width: 2.0),
+                                      borderSide: const BorderSide(
+                                        color: primaryBrand,
+                                        width: 2.0,
+                                      ),
                                     ),
                                     contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 20.0, 
+                                      horizontal: 20.0,
                                       vertical: 18.0,
                                     ),
                                   ),
@@ -199,43 +232,64 @@ class RegisterPage extends StatelessWidget {
                                   obscureText: true,
                                   decoration: InputDecoration(
                                     hintText: 'Confirm Password',
-                                    hintStyle: const TextStyle(color: secondaryText),
+                                    hintStyle: const TextStyle(
+                                      color: secondaryText,
+                                    ),
                                     filled: true,
                                     fillColor: cardBackground,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: borderColor),
+                                      borderSide: const BorderSide(
+                                        color: borderColor,
+                                      ),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: borderColor),
+                                      borderSide: const BorderSide(
+                                        color: borderColor,
+                                      ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: primaryBrand, width: 2.0),
+                                      borderSide: const BorderSide(
+                                        color: primaryBrand,
+                                        width: 2.0,
+                                      ),
                                     ),
                                     contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 20.0, 
+                                      horizontal: 20.0,
                                       vertical: 18.0,
                                     ),
                                   ),
                                   textInputAction: TextInputAction.done,
                                 ),
                                 const SizedBox(height: 32.0),
-                                
+
                                 // Register Button
                                 SizedBox(
                                   width: double.infinity,
                                   height: 56.0,
                                   child: ElevatedButton(
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const HomePage(),
+                                        ),
+                                      );
+                                    },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: accentButton,
                                       foregroundColor: Colors.white,
                                       elevation: 8,
-                                      shadowColor: accentButton.withOpacity(0.5),
+                                      shadowColor: accentButton.withOpacity(
+                                        0.5,
+                                      ),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16.0),
+                                        borderRadius: BorderRadius.circular(
+                                          16.0,
+                                        ),
                                       ),
                                     ),
                                     child: const Text(
@@ -254,9 +308,9 @@ class RegisterPage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 32.0),
-                    
+
                     // Bottom Section
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,

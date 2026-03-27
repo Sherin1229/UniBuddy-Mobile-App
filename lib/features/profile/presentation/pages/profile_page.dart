@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../shared/widgets/animated_app_background.dart';
+import 'resource_analytics_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -13,18 +14,18 @@ class _ProfilePageState extends State<ProfilePage> {
   final _formKey = GlobalKey<FormState>();
   AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
 
-  final _fullNameController = TextEditingController(text: 'Alex Johnson');
+  final _fullNameController = TextEditingController(text: 'Silomy A C S');
   final _emailController = TextEditingController(
-    text: 'alex.johnson@myuni.edu',
+    text: 'it23774070@my.sliit.lk',
   );
-  final _studentIdController = TextEditingController(text: 'IT2024-1132');
+  final _studentIdController = TextEditingController(text: 'IT23774070');
   final _universityController = TextEditingController(text: 'SLIIT');
   final _facultyController = TextEditingController(
     text: 'Faculty of Computing',
   );
   final _phoneController = TextEditingController(text: '+94 71 234 5678');
   final _bioController = TextEditingController(
-    text: 'Second-year student interested in software engineering and AI.',
+    text: 'Third-year undergraduate student',
   );
 
   static const _years = [
@@ -35,7 +36,7 @@ class _ProfilePageState extends State<ProfilePage> {
     'Postgraduate',
   ];
 
-  String _selectedYear = 'Year 2';
+  String _selectedYear = 'Year 3';
 
   @override
   void dispose() {
@@ -97,8 +98,18 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFFF0FDFA).withOpacity(0.95),
+                      const Color(0xFFDDF7F4).withOpacity(0.9),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
                   borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: const Color(0xFF99F6E4).withOpacity(0.65),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.08),
@@ -146,7 +157,105 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 24),
+                    InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const ResourceAnalyticsPage(),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF0F766E), Color(0xFF115E59)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF115E59).withOpacity(0.28),
+                              blurRadius: 16,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    Icons.analytics_rounded,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Resource Analytics',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        'Track your impact across the library',
+                                        style: TextStyle(
+                                          color: Color(0xFFCCFBF1),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.arrow_forward_rounded,
+                                  color: Colors.white,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: const [
+                                _AnalyticsPreviewChip(
+                                  icon: Icons.upload_file_rounded,
+                                  label: 'Uploads',
+                                ),
+                                _AnalyticsPreviewChip(
+                                  icon: Icons.download_rounded,
+                                  label: 'Downloads',
+                                ),
+                                _AnalyticsPreviewChip(
+                                  icon: Icons.visibility_rounded,
+                                  label: 'Views',
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
                     _buildField(
                       controller: _fullNameController,
                       label: 'Full Name *',
@@ -314,6 +423,40 @@ class _ProfilePageState extends State<ProfilePage> {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Color(0xFF0F766E), width: 1.6),
+      ),
+    );
+  }
+}
+
+class _AnalyticsPreviewChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _AnalyticsPreviewChip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.16),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Colors.white),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
