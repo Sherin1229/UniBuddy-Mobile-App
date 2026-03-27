@@ -18,7 +18,9 @@ class MyApp extends StatelessWidget {
         title: 'UniBuddy',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0F766E)), // Adjusted to match primaryBrand
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF0F766E),
+          ), // Adjusted to match primaryBrand
           useMaterial3: true,
         ),
         home: const OnboardingPage(),
