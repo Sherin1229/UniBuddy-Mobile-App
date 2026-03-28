@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:file_picker/file_picker.dart';
 
 class HelpRequestFormPage extends StatefulWidget {
   const HelpRequestFormPage({super.key});
@@ -15,12 +16,11 @@ class _HelpRequestFormPageState extends State<HelpRequestFormPage> {
   final _descriptionController = TextEditingController();
   final _deadlineController = TextEditingController();
   final _ownerNameController = TextEditingController();
-  final _attachmentController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
 
   String? _selectedSubject;
-  String? _attachmentName;
+  PlatformFile? _pickedFile;
 
   final List<String> _subjects = [
     'Database Systems',
@@ -40,18 +40,18 @@ class _HelpRequestFormPageState extends State<HelpRequestFormPage> {
     _descriptionController.dispose();
     _deadlineController.dispose();
     _ownerNameController.dispose();
-    _attachmentController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     super.dispose();
   }
 
   void _pickAttachment() async {
-    // Placeholder for file picker
-    setState(() {
-      _attachmentName = 'example.pdf';
-      _attachmentController.text = _attachmentName!;
-    });
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    if (result != null && result.files.isNotEmpty) {
+      setState(() {
+        _pickedFile = result.files.first;
+      });
+    }
   }
 
   void _pickDeadline() async {
@@ -69,7 +69,7 @@ class _HelpRequestFormPageState extends State<HelpRequestFormPage> {
     }
   }
 
-  void _submit() {
+  void _submitForm() {
     if (_formKey.currentState?.validate() ?? false) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Request submitted (placeholder)!')),
@@ -166,31 +166,41 @@ class _HelpRequestFormPageState extends State<HelpRequestFormPage> {
                 keyboardType: TextInputType.phone,
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return 'Phone number is required';
-                  if (!RegExp(r'^[0-9]{7,15}').hasMatch(v)) return 'Enter a valid phone number';
+                  final digitsOnly = v.replaceAll(RegExp(r'\D'), '');
+                  if (digitsOnly.length < 9) return 'Phone number must be at least 9 digits';
+                  if (digitsOnly.length > 10) return 'Phone number must not exceed 10 digits';
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _attachmentController,
-                readOnly: true,
-                onTap: _pickAttachment,
-                decoration: const InputDecoration(
-                  labelText: 'Attachment (Optional)',
-                  border: OutlineInputBorder(),
-                  suffixIcon: Icon(Icons.attach_file),
-                ),
-              ),
-              const SizedBox(height: 28),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _submit,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.attach_file),
+                    label: const Text('Pick Attachment'),
+                    onPressed: () async {
+                      FilePickerResult? result = await FilePicker.platform.pickFiles();
+                      if (result != null && result.files.isNotEmpty) {
+                        setState(() {
+                          _pickedFile = result.files.first;
+                        });
+                      }
+                    },
                   ),
-                  child: const Text('Submit Request'),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _pickedFile != null ? _pickedFile!.name : 'No file selected',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Center(
+                child: ElevatedButton(
+                  onPressed: _submitForm,
+                  child: const Text('Submit'),
                 ),
               ),
             ],
