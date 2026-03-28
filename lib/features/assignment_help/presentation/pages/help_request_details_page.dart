@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../data/models/help_request_model.dart';
 import '../../data/models/help_response_model.dart';
+import 'edit_help_request_page.dart';
 
 class HelpRequestDetailsPage extends StatefulWidget {
   final HelpRequest request;
@@ -116,52 +117,16 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
               icon: const Icon(Icons.edit),
               tooltip: 'Edit',
               onPressed: () async {
-                final newValues = await showDialog<Map<String, String>>(
-                  context: context,
-                  builder: (ctx) {
-                    final titleController = TextEditingController(text: request.title);
-                    final descController = TextEditingController(text: request.description);
-                    return AlertDialog(
-                      title: const Text('Edit Request'),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          TextField(
-                            controller: titleController,
-                            decoration: const InputDecoration(labelText: 'Title'),
-                          ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            controller: descController,
-                            minLines: 2,
-                            maxLines: 4,
-                            decoration: const InputDecoration(labelText: 'Description'),
-                          ),
-                        ],
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(ctx).pop({
-                              'title': titleController.text,
-                              'description': descController.text,
-                            });
-                          },
-                          child: const Text('Save'),
-                        ),
-                      ],
-                    );
-                  },
+                final updated = await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => EditHelpRequestPage(request: request),
+                  ),
                 );
-                if (newValues != null) {
+                if (updated == true) {
+                  setState(() {});
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Request updated (mock only)')),
+                    const SnackBar(content: Text('Request updated!')),
                   );
-                  // In a real app, update the backend and refresh the page.
                 }
               },
             ),
@@ -232,31 +197,17 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     Row(
                       children: [
-                        const Icon(Icons.person, size: 18, color: Color(0xFF6B7280)),
-                        const SizedBox(width: 6),
-                        Text('Owner: ', style: TextStyle(fontWeight: FontWeight.w600)),
-                        Text(request.ownerName),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.book_outlined, size: 18, color: Color(0xFF6B7280)),
-                        const SizedBox(width: 6),
-                        Text('Subject: ', style: TextStyle(fontWeight: FontWeight.w600)),
-                        Text(request.subject),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.calendar_today, size: 18, color: Color(0xFF6B7280)),
-                        const SizedBox(width: 6),
-                        Text('Deadline: ', style: TextStyle(fontWeight: FontWeight.w600)),
-                        Text(deadlineStr),
+                        Text('Owner: ', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+                        Text(request.ownerName, style: const TextStyle(fontWeight: FontWeight.w500)),
+                        const SizedBox(width: 18),
+                        Text('Subject: ', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+                        Text(request.subject, style: const TextStyle(fontWeight: FontWeight.w500)),
+                        const SizedBox(width: 18),
+                        Text('Deadline: ', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+                        Text(deadlineStr, style: const TextStyle(fontWeight: FontWeight.w500)),
                       ],
                     ),
                     const SizedBox(height: 18),

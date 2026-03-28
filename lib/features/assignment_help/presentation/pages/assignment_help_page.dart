@@ -29,7 +29,6 @@ class _AssignmentHelpPageState extends State<AssignmentHelpPage> {
   void _initializeMockData() {
     allRequests = [
       HelpRequest(
-        id: '1',
         title: 'Database Assignment',
         subject: 'Database Systems',
         ownerName: 'Kushani A', // owner
@@ -42,7 +41,6 @@ class _AssignmentHelpPageState extends State<AssignmentHelpPage> {
         attachmentName: 'Assignment 3.pdf',
       ),
       HelpRequest(
-        id: '2',
         title: 'SQL Query Optimization',
         subject: 'Database Systems',
         ownerName: 'Ahmed M',
@@ -54,7 +52,6 @@ class _AssignmentHelpPageState extends State<AssignmentHelpPage> {
         comments: 3,
       ),
       HelpRequest(
-        id: '3',
         title: 'Normalization Questions',
         subject: 'Database Design',
         ownerName: 'Priya S',
@@ -66,7 +63,6 @@ class _AssignmentHelpPageState extends State<AssignmentHelpPage> {
         comments: 4,
       ),
       HelpRequest(
-        id: '4',
         title: 'Entity Relationship Diagram Help',
         subject: 'Database Design',
         ownerName: 'Kushani A',
@@ -79,7 +75,6 @@ class _AssignmentHelpPageState extends State<AssignmentHelpPage> {
         attachmentName: 'ER_Diagram.jpg',
       ),
       HelpRequest(
-        id: '5',
         title: 'Transaction Management',
         subject: 'Database Systems',
         ownerName: 'Marcus T',
@@ -91,7 +86,6 @@ class _AssignmentHelpPageState extends State<AssignmentHelpPage> {
         comments: 2,
       ),
       HelpRequest(
-        id: '6',
         title: 'Python Data Structures',
         subject: 'Programming',
         ownerName: 'Lisa R',

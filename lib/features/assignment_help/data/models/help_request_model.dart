@@ -1,12 +1,11 @@
 enum HelpRequestStatus { overdue, open, solved }
 
 class HelpRequest {
-  final String id;
-  final String title;
-  final String subject;
-  final String ownerName;
-  final String description;
-  final DateTime deadline;
+  String title;
+  String subject;
+  String ownerName;
+  String description;
+  DateTime deadline;
   HelpRequestStatus status;
   final int views;
   final int likes;
@@ -15,7 +14,6 @@ class HelpRequest {
   final String? attachmentName;
 
   HelpRequest({
-    required this.id,
     required this.title,
     required this.subject,
     required this.ownerName,
