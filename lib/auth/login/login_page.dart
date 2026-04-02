@@ -1,21 +1,83 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../register/register_page.dart';
-import '../../home_page.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  String? _validateEmail(String? value) {
+    final email = value?.trim() ?? '';
+    if (email.isEmpty) {
+      return 'Email is required';
+    }
+
+    final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+    if (!emailRegex.hasMatch(email)) {
+      return 'Enter a valid email address';
+    }
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    final password = value ?? '';
+    if (password.isEmpty) {
+      return 'Password is required';
+    }
+    if (password.length < 8) {
+      return 'Password must be at least 8 characters';
+    }
+    if (!RegExp(r'[A-Z]').hasMatch(password)) {
+      return 'Password must contain at least 1 uppercase letter';
+    }
+    if (!RegExp(r'[a-z]').hasMatch(password)) {
+      return 'Password must contain at least 1 lowercase letter';
+    }
+    if (!RegExp(r'\d').hasMatch(password)) {
+      return 'Password must contain at least 1 number';
+    }
+    return null;
+  }
+
+  void _submitLogin() {
+    FocusScope.of(context).unfocus();
+
+    if (_formKey.currentState?.validate() ?? false) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Validation passed. Proceeding to sign in...'),
+        ),
+      );
+      // TODO: Integrate FirebaseAuth sign-in here.
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     // Brand Colors
     const Color primaryBrand = Color(0xFF0F766E);
     const Color accentButton = Color(0xFF14B8A6);
-    
+
     // Background Colors
     const Color cardBackground = Color(0xFFFFFFFF);
     const Color borderColor = Color(0xFFE2E8F0);
-    
+
     // Text Colors
     const Color primaryText = Color(0xFF1E293B);
     const Color secondaryText = Color(0xFF475569);
@@ -37,7 +99,9 @@ class LoginPage extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [
                 primaryBrand.withOpacity(0.7),
-                const Color(0xFF042F2E).withOpacity(0.9), // Darker teal shade for bottom
+                const Color(
+                  0xFF042F2E,
+                ).withOpacity(0.9), // Darker teal shade for bottom
               ],
             ),
           ),
@@ -69,9 +133,9 @@ class LoginPage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 32.0),
-                    
+
                     // Glassmorphism Login Card
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -84,7 +148,9 @@ class LoginPage extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: cardBackground.withOpacity(0.85),
                               borderRadius: BorderRadius.circular(28.0),
-                              border: Border.all(color: Colors.white.withOpacity(0.5)),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.5),
+                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.1),
@@ -93,121 +159,181 @@ class LoginPage extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Title
-                                const Center(
-                                  child: Text(
-                                    'Welcome Back',
-                                    style: TextStyle(
-                                      color: primaryText,
-                                      fontSize: 26.0,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 32.0),
-                                
-                                // Email Input Field
-                                TextField(
-                                  decoration: InputDecoration(
-                                    hintText: 'Email',
-                                    hintStyle: const TextStyle(color: secondaryText),
-                                    filled: true,
-                                    fillColor: cardBackground,
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: borderColor),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: borderColor),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: primaryBrand, width: 2.0),
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 20.0, 
-                                      vertical: 18.0,
-                                    ),
-                                  ),
-                                  keyboardType: TextInputType.emailAddress,
-                                  textInputAction: TextInputAction.next,
-                                ),
-                                const SizedBox(height: 20.0),
-                                
-                                // Password Input Field
-                                TextField(
-                                  obscureText: true,
-                                  decoration: InputDecoration(
-                                    hintText: 'Password',
-                                    hintStyle: const TextStyle(color: secondaryText),
-                                    filled: true,
-                                    fillColor: cardBackground,
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: borderColor),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: borderColor),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(16.0),
-                                      borderSide: const BorderSide(color: primaryBrand, width: 2.0),
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 20.0, 
-                                      vertical: 18.0,
-                                    ),
-                                  ),
-                                  textInputAction: TextInputAction.done,
-                                ),
-                                const SizedBox(height: 32.0),
-                                
-                                // Login Button
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 56.0,
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => const HomePage(),
-                                        ),
-                                      );
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: accentButton,
-                                      foregroundColor: Colors.white,
-                                      elevation: 8,
-                                      shadowColor: accentButton.withOpacity(0.5),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16.0),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Login',
+                            child: Form(
+                              key: _formKey,
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Title
+                                  const Center(
+                                    child: Text(
+                                      'Welcome Back',
                                       style: TextStyle(
-                                        fontSize: 18.0,
+                                        color: primaryText,
+                                        fontSize: 26.0,
                                         fontWeight: FontWeight.bold,
-                                        letterSpacing: 0.5,
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 32.0),
+
+                                  // Email Input Field
+                                  TextFormField(
+                                    controller: _emailController,
+                                    validator: _validateEmail,
+                                    decoration: InputDecoration(
+                                      hintText: 'Email',
+                                      hintStyle: const TextStyle(
+                                        color: secondaryText,
+                                      ),
+                                      filled: true,
+                                      fillColor: cardBackground,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          16.0,
+                                        ),
+                                        borderSide: const BorderSide(
+                                          color: borderColor,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          16.0,
+                                        ),
+                                        borderSide: const BorderSide(
+                                          color: borderColor,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          16.0,
+                                        ),
+                                        borderSide: const BorderSide(
+                                          color: primaryBrand,
+                                          width: 2.0,
+                                        ),
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 20.0,
+                                            vertical: 18.0,
+                                          ),
+                                    ),
+                                    keyboardType: TextInputType.emailAddress,
+                                    autofillHints: const [
+                                      AutofillHints.username,
+                                      AutofillHints.email,
+                                    ],
+                                    textInputAction: TextInputAction.next,
+                                  ),
+                                  const SizedBox(height: 20.0),
+
+                                  // Password Input Field
+                                  TextFormField(
+                                    controller: _passwordController,
+                                    validator: _validatePassword,
+                                    obscureText: _obscurePassword,
+                                    decoration: InputDecoration(
+                                      hintText: 'Password',
+                                      hintStyle: const TextStyle(
+                                        color: secondaryText,
+                                      ),
+                                      filled: true,
+                                      fillColor: cardBackground,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          16.0,
+                                        ),
+                                        borderSide: const BorderSide(
+                                          color: borderColor,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          16.0,
+                                        ),
+                                        borderSide: const BorderSide(
+                                          color: borderColor,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          16.0,
+                                        ),
+                                        borderSide: const BorderSide(
+                                          color: primaryBrand,
+                                          width: 2.0,
+                                        ),
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 20.0,
+                                            vertical: 18.0,
+                                          ),
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                          _obscurePassword
+                                              ? Icons.visibility
+                                              : Icons.visibility_off,
+                                          color: secondaryText,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            _obscurePassword =
+                                                !_obscurePassword;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                    autofillHints: const [
+                                      AutofillHints.password,
+                                    ],
+                                    textInputAction: TextInputAction.done,
+                                    onFieldSubmitted: (_) => _submitLogin(),
+                                  ),
+                                  const SizedBox(height: 32.0),
+
+                                  // Login Button
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 56.0,
+                                    child: ElevatedButton(
+                                      onPressed: _submitLogin,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: accentButton,
+                                        foregroundColor: Colors.white,
+                                        elevation: 8,
+                                        shadowColor: accentButton.withOpacity(
+                                          0.5,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16.0,
+                                          ),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Login',
+                                        style: TextStyle(
+                                          fontSize: 18.0,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 48.0),
-                    
+
                     // Bottom Section
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -223,7 +349,9 @@ class LoginPage extends StatelessWidget {
                           onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const RegisterPage()),
+                              MaterialPageRoute(
+                                builder: (context) => const RegisterPage(),
+                              ),
                             );
                           },
                           child: const Text(
