@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'features/resource_sharing/presentation/state/resource_library_provider.dart';
 import 'features/onboarding/presentation/pages/onboarding_page.dart';
+import 'firebase_options.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -18,7 +22,9 @@ class MyApp extends StatelessWidget {
         title: 'UniBuddy',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0F766E)), // Adjusted to match primaryBrand
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF0F766E),
+          ), // Adjusted to match primaryBrand
           useMaterial3: true,
         ),
         home: const OnboardingPage(),

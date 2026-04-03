@@ -6,16 +6,8 @@ const _teal = Color(0xFF3D9E8C);
 class ResourceCard extends StatelessWidget {
   final ResourceModel resource;
   final VoidCallback? onTap;
-  final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
 
-  const ResourceCard({
-    super.key,
-    required this.resource,
-    this.onTap,
-    this.onEdit,
-    this.onDelete,
-  });
+  const ResourceCard({super.key, required this.resource, this.onTap});
 
   String _timeAgo(DateTime date) {
     final diff = DateTime.now().difference(date);
@@ -64,20 +56,10 @@ class ResourceCard extends StatelessWidget {
             ),
           ],
         ),
-        trailing: PopupMenuButton<String>(
-          onSelected: (value) {
-            if (value == 'edit') {
-              onEdit?.call();
-            }
-            if (value == 'delete') {
-              onDelete?.call();
-            }
-          },
-          itemBuilder: (_) => const [
-            PopupMenuItem(value: 'edit', child: Text('Edit')),
-            PopupMenuItem(value: 'delete', child: Text('Delete')),
-          ],
-          icon: const Icon(Icons.more_vert, color: _teal),
+        trailing: const Icon(
+          Icons.arrow_forward_ios_rounded,
+          color: _teal,
+          size: 18,
         ),
       ),
     );

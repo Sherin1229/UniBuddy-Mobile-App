@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
 import '../../data/models/resource_model.dart';
-import '../../data/repositories/resource_repository.dart';
 import 'resource_library_state.dart';
 
 class ResourceLibraryProvider extends ChangeNotifier {
-  final _repo = ResourceRepository();
   ResourceLibraryState _state = const ResourceLibraryState();
-  StreamSubscription<List<ResourceModel>>? _subscription;
   List<ResourceModel> _allResources = const [];
 
   ResourceLibraryState get state => _state;
@@ -23,25 +19,15 @@ class ResourceLibraryProvider extends ChangeNotifier {
     _state = _state.copyWith(isLoading: true, clearError: true);
     notifyListeners();
 
-    _subscription?.cancel();
-    _subscription = _repo.getResources().listen(
-      (resources) {
-        _allResources = resources;
-        _state = _state.copyWith(
-          resources: _applyFilters(resources),
-          isLoading: false,
-          clearError: true,
-        );
-        notifyListeners();
-      },
-      onError: (error) {
-        _state = _state.copyWith(
-          isLoading: false,
-          error: 'Failed to load resources: $error',
-        );
-        notifyListeners();
-      },
-    );
+    Future.delayed(const Duration(milliseconds: 350), () {
+      _allResources = _mockResources();
+      _state = _state.copyWith(
+        resources: _applyFilters(_allResources),
+        isLoading: false,
+        clearError: true,
+      );
+      notifyListeners();
+    });
   }
 
   void setFilter(String filter) {
@@ -74,7 +60,7 @@ class ResourceLibraryProvider extends ChangeNotifier {
 
     try {
       final resource = ResourceModel(
-        id: '',
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
         title: title,
         category: category,
         subject: subject,
@@ -86,8 +72,12 @@ class ResourceLibraryProvider extends ChangeNotifier {
         fileSizeKb: fileSizeKb,
       );
 
-      await _repo.createResource(resource);
-      _state = _state.copyWith(isSubmitting: false, clearError: true);
+      _allResources = [resource, ..._allResources];
+      _state = _state.copyWith(
+        isSubmitting: false,
+        resources: _applyFilters(_allResources),
+        clearError: true,
+      );
       notifyListeners();
       return null;
     } catch (error) {
@@ -103,8 +93,14 @@ class ResourceLibraryProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _repo.updateResource(resource);
-      _state = _state.copyWith(isSubmitting: false, clearError: true);
+      _allResources = _allResources
+          .map((r) => r.id == resource.id ? resource : r)
+          .toList();
+      _state = _state.copyWith(
+        isSubmitting: false,
+        resources: _applyFilters(_allResources),
+        clearError: true,
+      );
       notifyListeners();
       return null;
     } catch (error) {
@@ -120,8 +116,12 @@ class ResourceLibraryProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _repo.deleteResource(id);
-      _state = _state.copyWith(isSubmitting: false, clearError: true);
+      _allResources = _allResources.where((r) => r.id != id).toList();
+      _state = _state.copyWith(
+        isSubmitting: false,
+        resources: _applyFilters(_allResources),
+        clearError: true,
+      );
       notifyListeners();
       return null;
     } catch (error) {
@@ -160,9 +160,60 @@ class ResourceLibraryProvider extends ChangeNotifier {
     return filtered;
   }
 
-  @override
-  void dispose() {
-    _subscription?.cancel();
-    super.dispose();
+  List<ResourceModel> _mockResources() {
+    return [
+      ResourceModel(
+        id: 'r1',
+        title: 'Calculus Study Guide',
+        category: 'Notes',
+        subject: 'Mathematics',
+        description:
+            'Comprehensive guide covering limits, derivatives, and integrals with worked examples.',
+        uploadedBy: 'Sarah Perera',
+        uploadedAt: DateTime.now().subtract(const Duration(days: 2, hours: 4)),
+        downloads: 124,
+        fileType: 'PDF',
+        fileSizeKb: 450,
+      ),
+      ResourceModel(
+        id: 'r2',
+        title: 'Data Structures Past Paper 2023',
+        category: 'Past Papers',
+        subject: 'Computer Science',
+        description:
+            'Final exam paper with marking scheme and a breakdown of high-weight questions.',
+        uploadedBy: 'Nimali Jayasena',
+        uploadedAt: DateTime.now().subtract(const Duration(days: 6)),
+        downloads: 302,
+        fileType: 'PDF',
+        fileSizeKb: 780,
+      ),
+      ResourceModel(
+        id: 'r3',
+        title: 'OOP Lecture Slides - Week 5',
+        category: 'Lectures',
+        subject: 'Software Engineering',
+        description:
+            'Covers abstraction, encapsulation, inheritance, and polymorphism with UML samples.',
+        uploadedBy: 'Kavindu Silva',
+        uploadedAt: DateTime.now().subtract(const Duration(hours: 18)),
+        downloads: 88,
+        fileType: 'PPTX',
+        fileSizeKb: 1560,
+      ),
+      ResourceModel(
+        id: 'r4',
+        title: 'Database Systems Quick Revision',
+        category: 'Notes',
+        subject: 'Information Systems',
+        description:
+            'Concise revision notes for SQL joins, normalization, indexing, and transactions.',
+        uploadedBy: 'Tharushi Fernando',
+        uploadedAt: DateTime.now().subtract(const Duration(days: 1, hours: 5)),
+        downloads: 167,
+        fileType: 'DOCX',
+        fileSizeKb: 620,
+      ),
+    ];
   }
 }
