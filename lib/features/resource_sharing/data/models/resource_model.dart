@@ -84,7 +84,7 @@ class ResourceModel {
       'subject': subject,
       'description': description,
       'uploadedBy': uploadedBy,
-      'uploadedAt': uploadedAt.toIso8601String(),
+      'uploadedAt': Timestamp.fromDate(uploadedAt),
       'downloads': downloads,
       'fileType': fileType,
       'fileSizeKb': fileSizeKb,
