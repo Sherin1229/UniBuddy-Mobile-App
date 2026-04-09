@@ -39,7 +39,12 @@ class ResourceFirestoreService {
   }
 
   Future<void> createResource(ResourceModel resource) async {
-    await _col.add(resource.toMap());
+    await _col.doc(resource.id).set(resource.toMap());
+  }
+
+  Future<bool> resourceExists(String id) async {
+    final snap = await _col.doc(id).get();
+    return snap.exists;
   }
 
   Future<void> updateResource(ResourceModel resource) async {

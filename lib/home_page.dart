@@ -4,6 +4,7 @@ import 'features/resource_sharing/presentation/pages/resource_form_page.dart';
 import 'features/assignment_help/presentation/pages/assignment_help_page.dart';
 import 'features/study_group/presentation/pages/study_group_page.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
+import 'features/assignment_help/presentation/pages/help_request_form_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,22 +27,39 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     const Color primaryBrand = Color(0xFF0F766E);
 
+    Widget? fab;
+    if (_currentIndex == 0) {
+      fab = FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ResourceFormPage()),
+          );
+        },
+        backgroundColor: primaryBrand,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.upload_file_outlined),
+        label: const Text('Upload'),
+      );
+    } else if (_currentIndex == 1) {
+      fab = FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const HelpRequestFormPage(),
+            ),
+          );
+        },
+        backgroundColor: primaryBrand,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('Post Help Request'),
+      );
+    }
+
     return Scaffold(
       extendBody: true,
       body: _pages[_currentIndex],
-      floatingActionButton: _currentIndex == 0
-          ? FloatingActionButton.extended(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const ResourceFormPage()),
-                );
-              },
-              backgroundColor: primaryBrand,
-              foregroundColor: Colors.white,
-              icon: const Icon(Icons.upload_file_outlined),
-              label: const Text('Upload'),
-            )
-          : null,
+      floatingActionButton: fab,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: NavigationBar(
         backgroundColor: const Color(0xF2FFFFFF),
