@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../data/models/help_request_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import '../../data/models/help_request_model.dart';
 
 class EditHelpRequestPage extends StatefulWidget {
   final HelpRequest request;
   const EditHelpRequestPage({super.key, required this.request});
 
   @override
-  State<EditHelpRequestPage> createState() => _EditHelpRequestPageState();
+  State<EditHelpRequestPage> createState() =>
+      _EditHelpRequestPageState();
 }
 
 class _EditHelpRequestPageState extends State<EditHelpRequestPage> {
@@ -16,13 +18,29 @@ class _EditHelpRequestPageState extends State<EditHelpRequestPage> {
   late TextEditingController _deadlineController;
   late String _selectedSubject;
   final _formKey = GlobalKey<FormState>();
+  bool _isSaving = false;
+
+  final List<String> _subjects = [
+    'Database Systems',
+    'Programming',
+    'Mathematics',
+    'Physics',
+    'Chemistry',
+    'Biology',
+    'English',
+    'Other',
+  ];
 
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: widget.request.title);
-    _descriptionController = TextEditingController(text: widget.request.description);
-    _deadlineController = TextEditingController(text: DateFormat('yyyy-MM-dd').format(widget.request.deadline));
+    _titleController =
+        TextEditingController(text: widget.request.title);
+    _descriptionController =
+        TextEditingController(text: widget.request.description);
+    _deadlineController = TextEditingController(
+        text: DateFormat('yyyy-MM-dd')
+            .format(widget.request.deadline));
     _selectedSubject = widget.request.subject;
   }
 
@@ -44,22 +62,52 @@ class _EditHelpRequestPageState extends State<EditHelpRequestPage> {
     );
     if (picked != null) {
       setState(() {
-        _deadlineController.text = DateFormat('yyyy-MM-dd').format(picked);
+        _deadlineController.text =
+            DateFormat('yyyy-MM-dd').format(picked);
       });
     }
   }
 
-  void _save() {
+  void _save() async {
     if (!_formKey.currentState!.validate()) return;
-    // In a real app, update the backend and pop
-    widget.request.title = _titleController.text;
-    widget.request.description = _descriptionController.text;
-    widget.request.subject = _selectedSubject;
-    widget.request.deadline = DateFormat('yyyy-MM-dd').parse(_deadlineController.text);
-    Navigator.of(context).pop(true);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Request updated!')),
-    );
+    setState(() => _isSaving = true);
+
+    final newDeadline = DateFormat('yyyy-MM-dd')
+        .parse(_deadlineController.text);
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('help_requests')
+          .doc(widget.request.id)
+          .update({
+        'title': _titleController.text.trim(),
+        'subject': _selectedSubject,
+        'description': _descriptionController.text.trim(),
+        'deadline': Timestamp.fromDate(newDeadline),
+      });
+
+      // Update local object too
+      widget.request.title = _titleController.text.trim();
+      widget.request.subject = _selectedSubject;
+      widget.request.description =
+          _descriptionController.text.trim();
+      widget.request.deadline = newDeadline;
+
+      if (mounted) {
+        Navigator.of(context).pop(true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Request updated!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   @override
@@ -79,27 +127,25 @@ class _EditHelpRequestPageState extends State<EditHelpRequestPage> {
                   labelText: 'Title',
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) => v == null || v.trim().isEmpty ? 'Title is required' : null,
+                validator: (v) => v == null || v.trim().isEmpty
+                    ? 'Title is required'
+                    : null,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedSubject,
-                items: [
-                  'Database Systems',
-                  'Programming',
-                  'Mathematics',
-                  'Physics',
-                  'Chemistry',
-                  'Biology',
-                  'English',
-                  'Other',
-                ].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
-                onChanged: (v) => setState(() => _selectedSubject = v!),
+                initialValue: _selectedSubject,
+                items: _subjects
+                    .map((s) => DropdownMenuItem(
+                        value: s, child: Text(s)))
+                    .toList(),
+                onChanged: (v) =>
+                    setState(() => _selectedSubject = v!),
                 decoration: const InputDecoration(
                   labelText: 'Subject',
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) => v == null || v.isEmpty ? 'Subject is required' : null,
+                validator: (v) =>
+                    v == null || v.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -110,7 +156,10 @@ class _EditHelpRequestPageState extends State<EditHelpRequestPage> {
                   labelText: 'Description',
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) => v == null || v.trim().length < 10 ? 'Description must be at least 10 characters' : null,
+                validator: (v) =>
+                    v == null || v.trim().length < 10
+                        ? 'At least 10 characters'
+                        : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -122,18 +171,29 @@ class _EditHelpRequestPageState extends State<EditHelpRequestPage> {
                   border: OutlineInputBorder(),
                   suffixIcon: Icon(Icons.calendar_today),
                 ),
-                validator: (v) => v == null || v.isEmpty ? 'Deadline is required' : null,
+                validator: (v) =>
+                    v == null || v.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 28),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _save,
+                  onPressed: _isSaving ? null : _save,
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 16),
+                    textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold),
                   ),
-                  child: const Text('Save Changes'),
+                  child: _isSaving
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2),
+                        )
+                      : const Text('Save Changes'),
                 ),
               ),
             ],

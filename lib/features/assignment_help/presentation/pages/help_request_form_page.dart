@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../data/models/help_request_model.dart';
 
 class HelpRequestFormPage extends StatefulWidget {
   const HelpRequestFormPage({super.key});
@@ -21,6 +24,16 @@ class _HelpRequestFormPageState extends State<HelpRequestFormPage> {
 
   String? _selectedSubject;
   PlatformFile? _pickedFile;
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser?.displayName != null) {
+      _ownerNameController.text = currentUser!.displayName!;
+    }
+  }
 
   final List<String> _subjects = [
     'Database Systems',
@@ -69,11 +82,69 @@ class _HelpRequestFormPageState extends State<HelpRequestFormPage> {
     }
   }
 
-  void _submitForm() {
-    if (_formKey.currentState?.validate() ?? false) {
+  void _submitForm() async {
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+
+    if (_selectedSubject == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Request submitted (placeholder)!')),
+        const SnackBar(content: Text('Please select a subject')),
       );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      // Parse deadline
+      final deadline = DateTime.parse(_deadlineController.text.trim());
+
+      // Create help request model
+      final currentUser = FirebaseAuth.instance.currentUser;
+      final helpRequest = HelpRequest(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        createdAt: DateTime.now(),
+        title: _titleController.text.trim(),
+        subject: _selectedSubject!,
+        ownerId: currentUser?.uid ?? '',
+        ownerName: _ownerNameController.text.trim(),
+        description: _descriptionController.text.trim(),
+        deadline: deadline,
+        attachmentPath: _pickedFile?.path,
+        attachmentName: _pickedFile?.name,
+      );
+
+      // Save to Firestore
+      await FirebaseFirestore.instance
+          .collection('help_requests')
+          .doc(helpRequest.id)
+          .set({
+            ...helpRequest.toMap(),
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Help request submitted successfully!')),
+        );
+        // Clear form or navigate back
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to submit help request: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -100,7 +171,7 @@ class _HelpRequestFormPageState extends State<HelpRequestFormPage> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedSubject,
+                initialValue: _selectedSubject,
                 items: _subjects.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
                 onChanged: (v) => setState(() => _selectedSubject = v),
                 decoration: const InputDecoration(
@@ -178,14 +249,7 @@ class _HelpRequestFormPageState extends State<HelpRequestFormPage> {
                   ElevatedButton.icon(
                     icon: const Icon(Icons.attach_file),
                     label: const Text('Pick Attachment'),
-                    onPressed: () async {
-                      FilePickerResult? result = await FilePicker.platform.pickFiles();
-                      if (result != null && result.files.isNotEmpty) {
-                        setState(() {
-                          _pickedFile = result.files.first;
-                        });
-                      }
-                    },
+                    onPressed: _pickAttachment,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -199,8 +263,14 @@ class _HelpRequestFormPageState extends State<HelpRequestFormPage> {
               const SizedBox(height: 24),
               Center(
                 child: ElevatedButton(
-                  onPressed: _submitForm,
-                  child: const Text('Submit'),
+                  onPressed: _isSubmitting ? null : _submitForm,
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Submit'),
                 ),
               ),
             ],
