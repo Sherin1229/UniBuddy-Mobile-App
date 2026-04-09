@@ -1,10 +1,17 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../data/models/resource_model.dart';
+import '../../data/services/resource_firestore_service.dart';
 import 'resource_library_state.dart';
 
 class ResourceLibraryProvider extends ChangeNotifier {
+  static const Duration _requestTimeout = Duration(seconds: 30);
+  final ResourceFirestoreService _service = ResourceFirestoreService();
   ResourceLibraryState _state = const ResourceLibraryState();
   List<ResourceModel> _allResources = const [];
+  StreamSubscription<List<ResourceModel>>? _resourceSubscription;
 
   ResourceLibraryState get state => _state;
 
@@ -15,19 +22,35 @@ class ResourceLibraryProvider extends ChangeNotifier {
     'Lectures',
   ];
 
+  @override
+  void dispose() {
+    _resourceSubscription?.cancel();
+    super.dispose();
+  }
+
   void loadResources() {
+    _resourceSubscription?.cancel();
     _state = _state.copyWith(isLoading: true, clearError: true);
     notifyListeners();
 
-    Future.delayed(const Duration(milliseconds: 350), () {
-      _allResources = _mockResources();
-      _state = _state.copyWith(
-        resources: _applyFilters(_allResources),
-        isLoading: false,
-        clearError: true,
-      );
-      notifyListeners();
-    });
+    _resourceSubscription = _service.fetchResources().listen(
+      (resources) {
+        _allResources = resources;
+        _state = _state.copyWith(
+          resources: _applyFilters(_allResources),
+          isLoading: false,
+          clearError: true,
+        );
+        notifyListeners();
+      },
+      onError: (error) {
+        _state = _state.copyWith(
+          isLoading: false,
+          error: 'Failed to load resources. Please try again.',
+        );
+        notifyListeners();
+      },
+    );
   }
 
   void setFilter(String filter) {
@@ -58,34 +81,57 @@ class ResourceLibraryProvider extends ChangeNotifier {
     _state = _state.copyWith(isSubmitting: true, clearError: true);
     notifyListeners();
 
-    try {
-      final resource = ResourceModel(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        title: title,
-        category: category,
-        subject: subject,
-        description: description,
-        uploadedBy: uploadedBy,
-        uploadedAt: DateTime.now(),
-        downloads: 0,
-        fileType: fileType,
-        fileSizeKb: fileSizeKb,
-      );
+    final resource = ResourceModel(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      title: title,
+      category: category,
+      subject: subject,
+      description: description,
+      uploadedBy: uploadedBy,
+      uploadedAt: DateTime.now(),
+      downloads: 0,
+      fileType: fileType,
+      fileSizeKb: fileSizeKb,
+    );
 
-      _allResources = [resource, ..._allResources];
-      _state = _state.copyWith(
-        isSubmitting: false,
-        resources: _applyFilters(_allResources),
-        clearError: true,
-      );
+    try {
+      await _service.createResource(resource).timeout(_requestTimeout);
+      _state = _state.copyWith(isSubmitting: false, clearError: true);
       notifyListeners();
       return null;
     } catch (error) {
-      const message = 'Failed to upload resource. Please try again.';
+      if (error is TimeoutException) {
+        // Avoid false negatives when Firestore commit succeeds after client timeout.
+        final wasCreated = await _verifyResourceCreation(resource.id);
+        if (wasCreated) {
+          _state = _state.copyWith(isSubmitting: false, clearError: true);
+          notifyListeners();
+          return null;
+        }
+      }
+
+      final message = _mapBackendError(error, action: 'upload');
       _state = _state.copyWith(isSubmitting: false, error: message);
       notifyListeners();
       return message;
     }
+  }
+
+  Future<bool> _verifyResourceCreation(String id) async {
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        final exists = await _service
+            .resourceExists(id)
+            .timeout(const Duration(seconds: 4));
+        if (exists) {
+          return true;
+        }
+      } catch (_) {
+        // Ignore and retry quickly to allow eventual consistency.
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+    }
+    return false;
   }
 
   Future<String?> updateResource(ResourceModel resource) async {
@@ -93,18 +139,12 @@ class ResourceLibraryProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _allResources = _allResources
-          .map((r) => r.id == resource.id ? resource : r)
-          .toList();
-      _state = _state.copyWith(
-        isSubmitting: false,
-        resources: _applyFilters(_allResources),
-        clearError: true,
-      );
+      await _service.updateResource(resource).timeout(_requestTimeout);
+      _state = _state.copyWith(isSubmitting: false, clearError: true);
       notifyListeners();
       return null;
     } catch (error) {
-      const message = 'Failed to update resource. Please try again.';
+      final message = _mapBackendError(error, action: 'update');
       _state = _state.copyWith(isSubmitting: false, error: message);
       notifyListeners();
       return message;
@@ -116,20 +156,37 @@ class ResourceLibraryProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _allResources = _allResources.where((r) => r.id != id).toList();
-      _state = _state.copyWith(
-        isSubmitting: false,
-        resources: _applyFilters(_allResources),
-        clearError: true,
-      );
+      await _service.deleteResource(id).timeout(_requestTimeout);
+      _state = _state.copyWith(isSubmitting: false, clearError: true);
       notifyListeners();
       return null;
     } catch (error) {
-      const message = 'Failed to delete resource. Please try again.';
+      final message = _mapBackendError(error, action: 'delete');
       _state = _state.copyWith(isSubmitting: false, error: message);
       notifyListeners();
       return message;
     }
+  }
+
+  String _mapBackendError(Object error, {required String action}) {
+    if (error is TimeoutException) {
+      return 'Request timed out while trying to $action the resource. Check your connection and try again.';
+    }
+
+    if (error is FirebaseException) {
+      switch (error.code) {
+        case 'permission-denied':
+          return 'Permission denied. Please check Firestore rules.';
+        case 'unavailable':
+          return 'Firestore is temporarily unavailable. Please try again.';
+        case 'unauthenticated':
+          return 'You need to sign in before uploading resources.';
+        default:
+          return 'Failed to $action resource (${error.code}).';
+      }
+    }
+
+    return 'Failed to $action resource. Please try again.';
   }
 
   List<ResourceModel> _applyFilters(
@@ -158,62 +215,5 @@ class ResourceLibraryProvider extends ChangeNotifier {
     }
 
     return filtered;
-  }
-
-  List<ResourceModel> _mockResources() {
-    return [
-      ResourceModel(
-        id: 'r1',
-        title: 'Calculus Study Guide',
-        category: 'Notes',
-        subject: 'Mathematics',
-        description:
-            'Comprehensive guide covering limits, derivatives, and integrals with worked examples.',
-        uploadedBy: 'Sarah Perera',
-        uploadedAt: DateTime.now().subtract(const Duration(days: 2, hours: 4)),
-        downloads: 124,
-        fileType: 'PDF',
-        fileSizeKb: 450,
-      ),
-      ResourceModel(
-        id: 'r2',
-        title: 'Data Structures Past Paper 2023',
-        category: 'Past Papers',
-        subject: 'Computer Science',
-        description:
-            'Final exam paper with marking scheme and a breakdown of high-weight questions.',
-        uploadedBy: 'Nimali Jayasena',
-        uploadedAt: DateTime.now().subtract(const Duration(days: 6)),
-        downloads: 302,
-        fileType: 'PDF',
-        fileSizeKb: 780,
-      ),
-      ResourceModel(
-        id: 'r3',
-        title: 'OOP Lecture Slides - Week 5',
-        category: 'Lectures',
-        subject: 'Software Engineering',
-        description:
-            'Covers abstraction, encapsulation, inheritance, and polymorphism with UML samples.',
-        uploadedBy: 'Kavindu Silva',
-        uploadedAt: DateTime.now().subtract(const Duration(hours: 18)),
-        downloads: 88,
-        fileType: 'PPTX',
-        fileSizeKb: 1560,
-      ),
-      ResourceModel(
-        id: 'r4',
-        title: 'Database Systems Quick Revision',
-        category: 'Notes',
-        subject: 'Information Systems',
-        description:
-            'Concise revision notes for SQL joins, normalization, indexing, and transactions.',
-        uploadedBy: 'Tharushi Fernando',
-        uploadedAt: DateTime.now().subtract(const Duration(days: 1, hours: 5)),
-        downloads: 167,
-        fileType: 'DOCX',
-        fileSizeKb: 620,
-      ),
-    ];
   }
 }
