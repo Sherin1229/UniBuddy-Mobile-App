@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../data/models/help_request_model.dart';
 import '../../data/models/help_response_model.dart';
 import 'edit_help_request_page.dart';
@@ -9,56 +13,157 @@ class HelpRequestDetailsPage extends StatefulWidget {
   const HelpRequestDetailsPage({super.key, required this.request});
 
   @override
-  State<HelpRequestDetailsPage> createState() => _HelpRequestDetailsPageState();
+  State<HelpRequestDetailsPage> createState() =>
+      _HelpRequestDetailsPageState();
 }
 
 class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
-  late List<HelpResponse> responses;
   final _responseController = TextEditingController();
+  bool _isPosting = false;
+  late int _commentCount;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _requestSubscription;
+
+  // Firestore reference for responses subcollection
+  CollectionReference get _responsesRef => FirebaseFirestore.instance
+      .collection('help_requests')
+      .doc(widget.request.id)
+      .collection('responses');
+
+  DocumentReference<Map<String, dynamic>> get _requestRef =>
+      FirebaseFirestore.instance.collection('help_requests').doc(widget.request.id);
 
   @override
   void initState() {
     super.initState();
-    responses = [
-      HelpResponse(
-        responderName: 'Kushani A',
-        text: 'Sure. An example of a JOIN query /SELECT students, name, courses, title FROM students JOIN courses ON students.id = courses.id;',
-        date: DateTime.now().subtract(const Duration(hours: 2)),
-        attachmentName: 'Example SQL.jpg',
-        likes: 9,
-        comments: 2,
-        isOwner: true,
-      ),
-      HelpResponse(
-        responderName: 'Samantha R',
-        text: 'You can also use LEFT JOIN for optional matches.',
-        date: DateTime.now().subtract(const Duration(hours: 1)),
-        likes: 3,
-        comments: 3,
-      ),
-    ];
+    _commentCount = widget.request.comments;
+    _requestSubscription = _requestRef.snapshots().listen((snapshot) {
+      if (snapshot.exists) {
+        final comments = snapshot.data()?['comments'];
+        if (comments is int) {
+          setState(() {
+            _commentCount = comments;
+          });
+        }
+      }
+    });
   }
 
   @override
   void dispose() {
+    _requestSubscription?.cancel();
     _responseController.dispose();
     super.dispose();
   }
 
-  void _postResponse() {
+  // ── Post a response to Firestore ──────────────────
+  void _postResponse() async {
     final text = _responseController.text.trim();
     if (text.isEmpty) return;
-    setState(() {
-      responses.insert(0, HelpResponse(
-        responderName: 'You',
-        text: text,
-        date: DateTime.now(),
-        isOwner: false,
-      ));
-      _responseController.clear();
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Response posted!')),
+
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final responderName = currentUser?.displayName ??
+        currentUser?.email?.split('@').first ??
+        'Anonymous';
+    final responderEmail = currentUser?.email ?? '';
+    final responderId = currentUser?.uid ?? '';
+    final isOwner = responderId.isNotEmpty && responderId == widget.request.ownerId;
+
+    setState(() => _isPosting = true);
+    try {
+      await _requestRef.update({'comments': FieldValue.increment(1)});
+
+      await _responsesRef.add({
+        'responderId': responderId,
+        'responderName': responderName,
+        'responderEmail': responderEmail,
+        'text': text,
+        'date': FieldValue.serverTimestamp(),
+        'likes': 0,
+        'comments': 0,
+        'isOwner': isOwner,
+        'attachmentName': null,
+      });
+
+      if (mounted) {
+        setState(() {
+          _commentCount += 1;
+        });
+        _responseController.clear();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Response posted!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to post: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isPosting = false);
+    }
+  }
+
+  // ── Mark as Solved in Firestore ───────────────────
+  void _markAsSolved() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('help_requests')
+          .doc(widget.request.id)
+          .update({'status': 'solved'});
+      if (mounted) {
+        setState(() => widget.request.status = HelpRequestStatus.solved);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Marked as solved!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $e')),
+        );
+      }
+    }
+  }
+
+  // ── Delete request from Firestore ─────────────────
+  void _deleteRequest() async {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Request'),
+        content:
+            const Text('Are you sure you want to delete this request?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              try {
+                await FirebaseFirestore.instance
+                    .collection('help_requests')
+                    .doc(widget.request.id)
+                    .delete();
+                if (!mounted) return;
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Request deleted!')),
+                );
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed to delete: $e')),
+                );
+              }
+            },
+            child: const Text('Delete',
+                style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -89,187 +194,327 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
     final request = widget.request;
     final statusColor = _getStatusColor(request.status);
     final statusText = _getStatusText(request.status);
-    final deadlineStr = DateFormat('MMMM d, yyyy').format(request.deadline);
-    final isOwner = request.ownerName == 'Kushani A'; // Replace with actual user check
+    final deadlineStr =
+        DateFormat('MMMM d, yyyy').format(request.deadline);
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final currentUid = currentUser?.uid;
+    final currentDisplayName = currentUser?.displayName;
+    final isOwner = (currentUid != null && request.ownerId == currentUid) ||
+        (request.ownerId.isEmpty && currentDisplayName != null && request.ownerName == currentDisplayName);
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF2FCF9),
       appBar: AppBar(
-        title: const Text('Help Request Details'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: const Color(0xFF0F766E),
+        elevation: 0,
+        title: const Text(
+          'Help Request Details',
+          style: TextStyle(
+            color: Color(0xFF0F766E),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: false,
         actions: [
           if (isOwner && request.status != HelpRequestStatus.solved)
-            TextButton.icon(
-              icon: const Icon(Icons.check_circle, color: Colors.green),
-              label: const Text('Mark as Solved', style: TextStyle(color: Colors.green)),
-              onPressed: () {
-                setState(() {
-                  widget.request.status = HelpRequestStatus.solved;
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Marked as solved (mock only)')),
-                );
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.green,
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              child: TextButton.icon(
+                style: TextButton.styleFrom(
+                  backgroundColor: const Color(0xFFDDF5EB),
+                  foregroundColor: const Color(0xFF0F766E),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                icon: const Icon(Icons.check_circle_outline),
+                label: const Text('Mark as Solved'),
+                onPressed: _markAsSolved,
               ),
             ),
           if (isOwner)
-            IconButton(
-              icon: const Icon(Icons.edit),
-              tooltip: 'Edit',
-              onPressed: () async {
-                final updated = await Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => EditHelpRequestPage(request: request),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              child: IconButton(
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFFFFF),
+                  foregroundColor: const Color(0xFF0F766E),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                );
-                if (updated == true) {
-                  setState(() {});
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Request updated!')),
+                ),
+                icon: const Icon(Icons.edit),
+                tooltip: 'Edit',
+                onPressed: () async {
+                  final updated = await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          EditHelpRequestPage(request: request),
+                    ),
                   );
-                }
-              },
+                  if (updated == true) setState(() {});
+                },
+              ),
             ),
           if (isOwner)
-            IconButton(
-              icon: const Icon(Icons.delete),
-              tooltip: 'Delete',
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text('Delete Request'),
-                    content: const Text('Are you sure you want to delete this request?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(ctx).pop(),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(ctx).pop();
-                          Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Request deleted (placeholder)')),
-                          );
-                        },
-                        child: const Text('Delete', style: TextStyle(color: Colors.red)),
-                      ),
-                    ],
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              child: IconButton(
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFEEF0),
+                  foregroundColor: const Color(0xFFB91C1C),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                );
-              },
+                ),
+                icon: const Icon(Icons.delete),
+                tooltip: 'Delete',
+                onPressed: _deleteRequest,
+              ),
             ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Card(
-              elevation: 6,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-              child: Padding(
-                padding: const EdgeInsets.all(22),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            request.title,
-                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: statusColor,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            statusText,
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                          ),
-                        ),
-                      ],
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Request card ──
+                  Card(
+                    color: const Color(0xFFFFFFFF),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      side: BorderSide(
+                        color: const Color(0xFFDDEEE4),
+                        width: 1,
+                      ),
                     ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Text('Owner: ', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
-                        Text(request.ownerName, style: const TextStyle(fontWeight: FontWeight.w500)),
-                        const SizedBox(width: 18),
-                        Text('Subject: ', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
-                        Text(request.subject, style: const TextStyle(fontWeight: FontWeight.w500)),
-                        const SizedBox(width: 18),
-                        Text('Deadline: ', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
-                        Text(deadlineStr, style: const TextStyle(fontWeight: FontWeight.w500)),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    Text(
-                      request.description,
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    const SizedBox(height: 18),
-                    if (request.attachmentName != null)
-                      Row(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.attach_file, color: Color(0xFF2563EB)),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE0E7FF),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(request.attachmentName!),
+                          Row(
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  request.title,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF134E4A),
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withAlpha(
+                                      (0.18 * 255).round()),
+                                  borderRadius:
+                                      BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  statusText,
+                                  style: TextStyle(
+                                    color: statusColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
+                          const SizedBox(height: 14),
+                          Wrap(
+                            spacing: 16,
+                            runSpacing: 6,
+                            children: [
+                              _metaText('Owner', request.ownerName),
+                              _metaText('Subject', request.subject),
+                              _metaText('Deadline', deadlineStr),
+                              _metaText('Comments', '$_commentCount'),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          Text(request.description,
+                              style: const TextStyle(fontSize: 16)),
+                          if (request.attachmentName != null) ...[
+                            const SizedBox(height: 14),
+                            Row(
+                              children: [
+                                const Icon(Icons.attach_file,
+                                    color: Color(0xFF2563EB)),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE0E7FF),
+                                    borderRadius:
+                                        BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                      request.attachmentName!),
+                                ),
+                              ],
+                            ),
+                          ],
+                          const SizedBox(height: 18),
                         ],
                       ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Icon(Icons.visibility, size: 18, color: Colors.grey[500]),
-                        const SizedBox(width: 4),
-                        Text('${request.views}'),
-                        const SizedBox(width: 18),
-                        Icon(Icons.thumb_up_alt_outlined, size: 18, color: Colors.grey[500]),
-                        const SizedBox(width: 4),
-                        Text('${request.likes}'),
-                        const SizedBox(width: 18),
-                        Icon(Icons.chat_bubble_outline, size: 18, color: Colors.grey[500]),
-                        const SizedBox(width: 4),
-                        Text('${request.comments}'),
-                      ],
                     ),
-                  ],
-                ),
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  // ── Live responses from Firestore ──
+                  Text('Responses',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 10),
+
+                  StreamBuilder<QuerySnapshot>(
+                    stream: _responsesRef
+                        .orderBy('date', descending: false)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return const Center(
+                            child: CircularProgressIndicator());
+                      }
+                      if (!snapshot.hasData ||
+                          snapshot.data!.docs.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Text('No responses yet. Be the first!',
+                              style:
+                                  TextStyle(color: Colors.grey)),
+                        );
+                      }
+                      final responses =
+                          snapshot.data!.docs.map((doc) {
+                        return HelpResponse.fromMap(
+                          doc.data() as Map<String, dynamic>,
+                          doc.id,
+                        );
+                      }).toList();
+
+                      return Column(
+                        children: responses
+                            .map((r) => _buildResponseCard(r))
+                            .toList(),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 80),
+                ],
               ),
             ),
-            const SizedBox(height: 28),
-            Text('Responses', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 10),
-            ...responses.map((r) => _buildResponseCard(r)).toList(),
-            const SizedBox(height: 24),
-            _buildPostResponseBox(),
-          ],
-        ),
+          ),
+
+          // ── Reply bar ──
+          Container(
+            padding: const EdgeInsets.fromLTRB(12, 14, 12, 24),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF7FDF8),
+              border: Border(
+                  top: BorderSide(color: Color(0xFFD7EDE3))),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _responseController,
+                    minLines: 1,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      hintText: 'Write a response...',
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                _isPosting
+                    ? const SizedBox(
+                        width: 30,
+                        height: 30,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFF0F766E)),
+                      )
+                    : Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDDF5EB),
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.send,
+                              color: Color(0xFF0F766E)),
+                          onPressed: _postResponse,
+                        ),
+                      ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
+  Widget _metaText(String label, String value) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('$label: ',
+            style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF64748B))),
+        Text(value,
+            style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0F766E))),
+      ],
+    );
+  }
+
   Widget _buildResponseCard(HelpResponse r) {
+    final displayName = r.responderName.isNotEmpty
+        ? r.responderName
+        : (r.responderEmail.split('@').first.isNotEmpty
+            ? r.responderEmail.split('@').first
+            : 'Anonymous');
+    final avatarChar = displayName.isNotEmpty
+        ? displayName[0].toUpperCase()
+        : 'A';
+
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: const Color(0xFFFFFFFF),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: const Color(0xFFD8E9E0), width: 1),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -277,79 +522,60 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
               children: [
                 CircleAvatar(
                   radius: 16,
-                  child: Text(r.responderName[0]),
+                  backgroundColor: const Color(0xFFDDF5EB),
+                  child: Text(
+                    avatarChar,
+                    style: const TextStyle(
+                        color: Color(0xFF0F766E),
+                        fontWeight: FontWeight.bold),
+                  ),
                 ),
                 const SizedBox(width: 10),
-                Text(r.responderName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(displayName,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F766E))),
                 if (r.isOwner)
                   Container(
                     margin: const EdgeInsets.only(left: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.red[100],
+                      color: const Color(0xFFFFE4E6),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Text('OWNER', style: TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold)),
+                    child: const Text('OWNER',
+                        style: TextStyle(
+                            color: Color(0xFFB91C1C),
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold)),
                   ),
                 const Spacer(),
-                Text(DateFormat('MMM d, HH:mm').format(r.date), style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                Text(
+                  DateFormat('MMM d, HH:mm').format(r.date),
+                  style: const TextStyle(
+                      fontSize: 12, color: Color(0xFF64748B)),
+                ),
               ],
             ),
             const SizedBox(height: 10),
-            Text(r.text),
+            Text(r.text,
+                style: const TextStyle(color: Color(0xFF334155))),
             if (r.attachmentName != null)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Row(
                   children: [
-                    const Icon(Icons.attach_file, size: 18, color: Color(0xFF2563EB)),
+                    const Icon(Icons.attach_file,
+                        size: 18, color: Color(0xFF2563EB)),
                     const SizedBox(width: 4),
-                    Text(r.attachmentName!),
+                    Text(r.attachmentName!,
+                        style: const TextStyle(
+                            color: Color(0xFF0F766E),
+                            fontWeight: FontWeight.w500)),
                   ],
                 ),
               ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Icon(Icons.thumb_up_alt_outlined, size: 16, color: Colors.grey[500]),
-                const SizedBox(width: 4),
-                Text('${r.likes}'),
-                const SizedBox(width: 16),
-                Icon(Icons.chat_bubble_outline, size: 16, color: Colors.grey[500]),
-                const SizedBox(width: 4),
-                Text('${r.comments}'),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPostResponseBox() {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _responseController,
-                minLines: 1,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  hintText: 'Write a response...',
-                  border: InputBorder.none,
-                ),
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.send, color: Color(0xFF0F766E)),
-              onPressed: _postResponse,
-              tooltip: 'Post Response',
-            ),
           ],
         ),
       ),
