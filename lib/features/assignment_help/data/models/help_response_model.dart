@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HelpResponse {
   final String id;
+  final String responderId;
   final String responderName;
+  final String responderEmail;
   final String text;
   final DateTime date;
   final String? attachmentName;
@@ -12,7 +14,9 @@ class HelpResponse {
 
   HelpResponse({
     required this.id,
+    required this.responderId,
     required this.responderName,
+    required this.responderEmail,
     required this.text,
     required this.date,
     this.attachmentName,
@@ -28,7 +32,9 @@ class HelpResponse {
     }
     return HelpResponse(
       id: docId,
+      responderId: map['responderId'] ?? '',
       responderName: map['responderName'] ?? '',
+      responderEmail: map['responderEmail'] ?? '',
       text: map['text'] ?? '',
       date: date,
       attachmentName: map['attachmentName'],
@@ -40,7 +46,9 @@ class HelpResponse {
 
   Map<String, dynamic> toMap() {
     return {
+      'responderId': responderId,
       'responderName': responderName,
+      'responderEmail': responderEmail,
       'text': text,
       'date': Timestamp.fromDate(date),
       'attachmentName': attachmentName,

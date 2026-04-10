@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -18,6 +20,8 @@ class HelpRequestDetailsPage extends StatefulWidget {
 class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
   final _responseController = TextEditingController();
   bool _isPosting = false;
+  late int _commentCount;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _requestSubscription;
 
   // Firestore reference for responses subcollection
   CollectionReference get _responsesRef => FirebaseFirestore.instance
@@ -25,8 +29,28 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
       .doc(widget.request.id)
       .collection('responses');
 
+  DocumentReference<Map<String, dynamic>> get _requestRef =>
+      FirebaseFirestore.instance.collection('help_requests').doc(widget.request.id);
+
+  @override
+  void initState() {
+    super.initState();
+    _commentCount = widget.request.comments;
+    _requestSubscription = _requestRef.snapshots().listen((snapshot) {
+      if (snapshot.exists) {
+        final comments = snapshot.data()?['comments'];
+        if (comments is int) {
+          setState(() {
+            _commentCount = comments;
+          });
+        }
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _requestSubscription?.cancel();
     _responseController.dispose();
     super.dispose();
   }
@@ -37,14 +61,21 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
     if (text.isEmpty) return;
 
     final currentUser = FirebaseAuth.instance.currentUser;
-    final responderName = currentUser?.displayName ?? 'Anonymous';
-    final currentUid = currentUser?.uid;
-    final isOwner = currentUid != null && currentUid == widget.request.ownerId;
+    final responderName = currentUser?.displayName ??
+        currentUser?.email?.split('@').first ??
+        'Anonymous';
+    final responderEmail = currentUser?.email ?? '';
+    final responderId = currentUser?.uid ?? '';
+    final isOwner = responderId.isNotEmpty && responderId == widget.request.ownerId;
 
     setState(() => _isPosting = true);
     try {
+      await _requestRef.update({'comments': FieldValue.increment(1)});
+
       await _responsesRef.add({
+        'responderId': responderId,
         'responderName': responderName,
+        'responderEmail': responderEmail,
         'text': text,
         'date': FieldValue.serverTimestamp(),
         'likes': 0,
@@ -52,8 +83,12 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
         'isOwner': isOwner,
         'attachmentName': null,
       });
-      _responseController.clear();
+
       if (mounted) {
+        setState(() {
+          _commentCount += 1;
+        });
+        _responseController.clear();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Response posted!')),
         );
@@ -168,35 +203,75 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
         (request.ownerId.isEmpty && currentDisplayName != null && request.ownerName == currentDisplayName);
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF2FCF9),
       appBar: AppBar(
-        title: const Text('Help Request Details'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: const Color(0xFF0F766E),
+        elevation: 0,
+        title: const Text(
+          'Help Request Details',
+          style: TextStyle(
+            color: Color(0xFF0F766E),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: false,
         actions: [
           if (isOwner && request.status != HelpRequestStatus.solved)
-            TextButton.icon(
-              icon: const Icon(Icons.check_circle, color: Colors.green),
-              label: const Text('Mark as Solved',
-                  style: TextStyle(color: Colors.green)),
-              onPressed: _markAsSolved,
-            ),
-          if (isOwner)
-            IconButton(
-              icon: const Icon(Icons.edit),
-              tooltip: 'Edit',
-              onPressed: () async {
-                final updated = await Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        EditHelpRequestPage(request: request),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              child: TextButton.icon(
+                style: TextButton.styleFrom(
+                  backgroundColor: const Color(0xFFDDF5EB),
+                  foregroundColor: const Color(0xFF0F766E),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                );
-                if (updated == true) setState(() {});
-              },
+                ),
+                icon: const Icon(Icons.check_circle_outline),
+                label: const Text('Mark as Solved'),
+                onPressed: _markAsSolved,
+              ),
             ),
           if (isOwner)
-            IconButton(
-              icon: const Icon(Icons.delete),
-              tooltip: 'Delete',
-              onPressed: _deleteRequest,
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              child: IconButton(
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFFFFF),
+                  foregroundColor: const Color(0xFF0F766E),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                icon: const Icon(Icons.edit),
+                tooltip: 'Edit',
+                onPressed: () async {
+                  final updated = await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          EditHelpRequestPage(request: request),
+                    ),
+                  );
+                  if (updated == true) setState(() {});
+                },
+              ),
+            ),
+          if (isOwner)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              child: IconButton(
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFEEF0),
+                  foregroundColor: const Color(0xFFB91C1C),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                icon: const Icon(Icons.delete),
+                tooltip: 'Delete',
+                onPressed: _deleteRequest,
+              ),
             ),
         ],
       ),
@@ -210,11 +285,17 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
                 children: [
                   // ── Request card ──
                   Card(
-                    elevation: 6,
+                    color: const Color(0xFFFFFFFF),
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18)),
+                      borderRadius: BorderRadius.circular(24),
+                      side: BorderSide(
+                        color: const Color(0xFFDDEEE4),
+                        width: 1,
+                      ),
+                    ),
                     child: Padding(
-                      padding: const EdgeInsets.all(22),
+                      padding: const EdgeInsets.all(24),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -226,24 +307,28 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
                                 child: Text(
                                   request.title,
                                   style: const TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold),
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF134E4A),
+                                  ),
                                 ),
                               ),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 6),
+                                    horizontal: 14, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: statusColor,
+                                  color: statusColor.withAlpha(
+                                      (0.18 * 255).round()),
                                   borderRadius:
-                                      BorderRadius.circular(8),
+                                      BorderRadius.circular(12),
                                 ),
                                 child: Text(
                                   statusText,
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13),
+                                  style: TextStyle(
+                                    color: statusColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ),
                             ],
@@ -256,6 +341,7 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
                               _metaText('Owner', request.ownerName),
                               _metaText('Subject', request.subject),
                               _metaText('Deadline', deadlineStr),
+                              _metaText('Comments', '$_commentCount'),
                             ],
                           ),
                           const SizedBox(height: 18),
@@ -285,27 +371,6 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
                             ),
                           ],
                           const SizedBox(height: 18),
-                          Row(
-                            children: [
-                              Icon(Icons.visibility,
-                                  size: 18,
-                                  color: Colors.grey[500]),
-                              const SizedBox(width: 4),
-                              Text('${request.views}'),
-                              const SizedBox(width: 18),
-                              Icon(Icons.thumb_up_alt_outlined,
-                                  size: 18,
-                                  color: Colors.grey[500]),
-                              const SizedBox(width: 4),
-                              Text('${request.likes}'),
-                              const SizedBox(width: 18),
-                              Icon(Icons.chat_bubble_outline,
-                                  size: 18,
-                                  color: Colors.grey[500]),
-                              const SizedBox(width: 4),
-                              Text('${request.comments}'),
-                            ],
-                          ),
                         ],
                       ),
                     ),
@@ -360,11 +425,11 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
 
           // ── Reply bar ──
           Container(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 24),
+            padding: const EdgeInsets.fromLTRB(12, 14, 12, 24),
             decoration: const BoxDecoration(
-              color: Colors.white,
+              color: Color(0xFFF7FDF8),
               border: Border(
-                  top: BorderSide(color: Color(0xFFE5E7EB))),
+                  top: BorderSide(color: Color(0xFFD7EDE3))),
             ),
             child: Row(
               children: [
@@ -373,23 +438,38 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
                     controller: _responseController,
                     minLines: 1,
                     maxLines: 4,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Write a response...',
-                      border: InputBorder.none,
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                   ),
                 ),
+                const SizedBox(width: 10),
                 _isPosting
                     ? const SizedBox(
-                        width: 24,
-                        height: 24,
+                        width: 30,
+                        height: 30,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2),
-                      )
-                    : IconButton(
-                        icon: const Icon(Icons.send,
+                            strokeWidth: 2,
                             color: Color(0xFF0F766E)),
-                        onPressed: _postResponse,
+                      )
+                    : Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDDF5EB),
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.send,
+                              color: Color(0xFF0F766E)),
+                          onPressed: _postResponse,
+                        ),
                       ),
               ],
             ),
@@ -406,22 +486,35 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
         Text('$label: ',
             style: const TextStyle(
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF6B7280))),
+                color: Color(0xFF64748B))),
         Text(value,
-            style:
-                const TextStyle(fontWeight: FontWeight.w500)),
+            style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0F766E))),
       ],
     );
   }
 
   Widget _buildResponseCard(HelpResponse r) {
+    final displayName = r.responderName.isNotEmpty
+        ? r.responderName
+        : (r.responderEmail.split('@').first.isNotEmpty
+            ? r.responderEmail.split('@').first
+            : 'Anonymous');
+    final avatarChar = displayName.isNotEmpty
+        ? displayName[0].toUpperCase()
+        : 'A';
+
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
-      elevation: 2,
+      color: const Color(0xFFFFFFFF),
+      elevation: 0,
       shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12)),
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: const Color(0xFFD8E9E0), width: 1),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -429,24 +522,31 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
               children: [
                 CircleAvatar(
                   radius: 16,
-                  child: Text(r.responderName[0]),
+                  backgroundColor: const Color(0xFFDDF5EB),
+                  child: Text(
+                    avatarChar,
+                    style: const TextStyle(
+                        color: Color(0xFF0F766E),
+                        fontWeight: FontWeight.bold),
+                  ),
                 ),
                 const SizedBox(width: 10),
-                Text(r.responderName,
+                Text(displayName,
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold)),
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F766E))),
                 if (r.isOwner)
                   Container(
                     margin: const EdgeInsets.only(left: 8),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.red[100],
+                      color: const Color(0xFFFFE4E6),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Text('OWNER',
                         style: TextStyle(
-                            color: Colors.red,
+                            color: Color(0xFFB91C1C),
                             fontSize: 11,
                             fontWeight: FontWeight.bold)),
                   ),
@@ -454,12 +554,13 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
                 Text(
                   DateFormat('MMM d, HH:mm').format(r.date),
                   style: const TextStyle(
-                      fontSize: 12, color: Colors.grey),
+                      fontSize: 12, color: Color(0xFF64748B)),
                 ),
               ],
             ),
             const SizedBox(height: 10),
-            Text(r.text),
+            Text(r.text,
+                style: const TextStyle(color: Color(0xFF334155))),
             if (r.attachmentName != null)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
@@ -468,24 +569,13 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
                     const Icon(Icons.attach_file,
                         size: 18, color: Color(0xFF2563EB)),
                     const SizedBox(width: 4),
-                    Text(r.attachmentName!),
+                    Text(r.attachmentName!,
+                        style: const TextStyle(
+                            color: Color(0xFF0F766E),
+                            fontWeight: FontWeight.w500)),
                   ],
                 ),
               ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Icon(Icons.thumb_up_alt_outlined,
-                    size: 16, color: Colors.grey[500]),
-                const SizedBox(width: 4),
-                Text('${r.likes}'),
-                const SizedBox(width: 16),
-                Icon(Icons.chat_bubble_outline,
-                    size: 16, color: Colors.grey[500]),
-                const SizedBox(width: 4),
-                Text('${r.comments}'),
-              ],
-            ),
           ],
         ),
       ),

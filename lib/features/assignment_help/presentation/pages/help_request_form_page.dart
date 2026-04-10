@@ -148,6 +148,28 @@ class _HelpRequestFormPageState extends State<HelpRequestFormPage> {
     }
   }
 
+  InputDecoration _buildInputDecoration(String label, {Widget? suffixIcon}) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: const Color(0xFFEFFBF6),
+      suffixIcon: suffixIcon,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: BorderSide(color: const Color(0xFFD6EDE0)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: BorderSide(color: const Color(0xFF78C4A7), width: 1.5),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -156,124 +178,144 @@ class _HelpRequestFormPageState extends State<HelpRequestFormPage> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(18),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => v == null || v.trim().isEmpty ? 'Title is required' : null,
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedSubject,
-                items: _subjects.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
-                onChanged: (v) => setState(() => _selectedSubject = v),
-                decoration: const InputDecoration(
-                  labelText: 'Subject',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => v == null || v.isEmpty ? 'Subject is required' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descriptionController,
-                minLines: 3,
-                maxLines: 5,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => v == null || v.trim().length < 10 ? 'Description must be at least 10 characters' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _deadlineController,
-                readOnly: true,
-                onTap: _pickDeadline,
-                decoration: const InputDecoration(
-                  labelText: 'Deadline',
-                  border: OutlineInputBorder(),
-                  suffixIcon: Icon(Icons.calendar_today),
-                ),
-                validator: (v) => v == null || v.isEmpty ? 'Deadline is required' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _ownerNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Your Name',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => v == null || v.trim().isEmpty ? 'Name is required' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Email is required';
-                  final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+');
-                  if (!emailRegex.hasMatch(v)) return 'Enter a valid email';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.phone,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Phone number is required';
-                  final digitsOnly = v.replaceAll(RegExp(r'\D'), '');
-                  if (digitsOnly.length < 9) return 'Phone number must be at least 9 digits';
-                  if (digitsOnly.length > 10) return 'Phone number must not exceed 10 digits';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.attach_file),
-                    label: const Text('Pick Attachment'),
-                    onPressed: _pickAttachment,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      _pickedFile != null ? _pickedFile!.name : 'No file selected',
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Center(
-                child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submitForm,
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Submit'),
-                ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF6FCF9),
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
               ),
             ],
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextFormField(
+                  controller: _titleController,
+                  decoration: _buildInputDecoration('Title'),
+                  validator: (v) => v == null || v.trim().isEmpty ? 'Title is required' : null,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _selectedSubject,
+                        items: _subjects.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                        onChanged: (v) => setState(() => _selectedSubject = v),
+                        decoration: _buildInputDecoration('Subject'),
+                        validator: (v) => v == null || v.isEmpty ? 'Subject is required' : null,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _deadlineController,
+                        readOnly: true,
+                        onTap: _pickDeadline,
+                        decoration: _buildInputDecoration('Deadline', suffixIcon: const Icon(Icons.calendar_today)),
+                        validator: (v) => v == null || v.isEmpty ? 'Deadline is required' : null,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _descriptionController,
+                  minLines: 4,
+                  maxLines: 6,
+                  decoration: _buildInputDecoration('Description'),
+                  validator: (v) => v == null || v.trim().length < 10 ? 'Description must be at least 10 characters' : null,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _ownerNameController,
+                        decoration: _buildInputDecoration('Your Name'),
+                        validator: (v) => v == null || v.trim().isEmpty ? 'Name is required' : null,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _emailController,
+                        decoration: _buildInputDecoration('Email'),
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return 'Email is required';
+                          final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+');
+                          if (!emailRegex.hasMatch(v)) return 'Enter a valid email';
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _phoneController,
+                  decoration: _buildInputDecoration('Phone Number'),
+                  keyboardType: TextInputType.phone,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Phone number is required';
+                    final digitsOnly = v.replaceAll(RegExp(r'\D'), '');
+                    if (digitsOnly.length < 9) return 'Phone number must be at least 9 digits';
+                    if (digitsOnly.length > 10) return 'Phone number must not exceed 10 digits';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFB7E4D1),
+                        foregroundColor: const Color(0xFF0F766E),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      ),
+                      icon: const Icon(Icons.attach_file),
+                      label: const Text('Pick Attachment'),
+                      onPressed: _pickAttachment,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _pickedFile != null ? _pickedFile!.name : 'No file selected',
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Color(0xFF475569)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Center(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(160, 48),
+                      backgroundColor: const Color(0xFFDDF5EB),
+                      foregroundColor: const Color(0xFF0F766E),
+                      elevation: 0,
+                    ),
+                    onPressed: _isSubmitting ? null : _submitForm,
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0F766E)),
+                          )
+                        : const Text('Submit'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
