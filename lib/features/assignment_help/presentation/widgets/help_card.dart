@@ -68,6 +68,28 @@ class HelpCard extends StatelessWidget {
     return months[month - 1];
   }
 
+  Color _getBackgroundColor(HelpRequestStatus status) {
+    switch (status) {
+      case HelpRequestStatus.overdue:
+        return const Color(0xFFFFE6E6);
+      case HelpRequestStatus.open:
+        return const Color(0xFFEFF6FF);
+      case HelpRequestStatus.solved:
+        return const Color(0xFFE6F4EA);
+    }
+  }
+
+  Color _getBorderColor(HelpRequestStatus status) {
+    switch (status) {
+      case HelpRequestStatus.overdue:
+        return const Color(0xFFFECACA);
+      case HelpRequestStatus.open:
+        return const Color(0xFFBFDBFE);
+      case HelpRequestStatus.solved:
+        return const Color(0xFFC7F5D6);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -76,14 +98,14 @@ class HelpCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _getBackgroundColor(request.status),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+          border: Border.all(color: _getBorderColor(request.status), width: 1),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
             )
           ],
         ),
