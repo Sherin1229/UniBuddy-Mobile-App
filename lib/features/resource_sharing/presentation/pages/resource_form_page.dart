@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -33,6 +34,7 @@ class _ResourceFormPageState extends State<ResourceFormPage> {
   static const _allowedFileTypes = ['PDF', 'DOC', 'DOCX', 'PPT', 'PPTX', 'ZIP'];
   late String _selectedCategory;
   String? _selectedFileName;
+  Uint8List? _selectedFileBytes;
 
   bool get _isEditing => widget.existingResource != null;
 
@@ -80,6 +82,16 @@ class _ResourceFormPageState extends State<ResourceFormPage> {
       return;
     }
 
+    if (!_isEditing && _selectedFileBytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please attach a file before uploading.'),
+          backgroundColor: Color(0xFFB91C1C),
+        ),
+      );
+      return;
+    }
+
     final provider = context.read<ResourceLibraryProvider>();
     final fileSize = int.tryParse(_fileSizeKbController.text.trim()) ?? 0;
 
@@ -106,6 +118,8 @@ class _ResourceFormPageState extends State<ResourceFormPage> {
         uploadedBy: _uploadedByController.text.trim(),
         fileType: _fileTypeController.text.trim().toUpperCase(),
         fileSizeKb: fileSize,
+        fileBytes: _selectedFileBytes,
+        fileName: _selectedFileName,
       );
     }
 
@@ -145,6 +159,7 @@ class _ResourceFormPageState extends State<ResourceFormPage> {
   Future<void> _pickFile() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
+      withData: true,
       allowedExtensions: _allowedFileTypes.map((e) => e.toLowerCase()).toList(),
     );
 
@@ -173,14 +188,28 @@ class _ResourceFormPageState extends State<ResourceFormPage> {
 
     setState(() {
       _selectedFileName = file.name;
+      _selectedFileBytes = file.bytes;
       _fileTypeController.text = extension;
       _fileSizeKbController.text = sizeKb.toString();
     });
+
+    if (_selectedFileBytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not read file bytes. Please choose the file again.',
+          ),
+          backgroundColor: Color(0xFFB91C1C),
+        ),
+      );
+      _removeAttachedFile();
+    }
   }
 
   void _removeAttachedFile() {
     setState(() {
       _selectedFileName = null;
+      _selectedFileBytes = null;
       _fileTypeController.clear();
       _fileSizeKbController.clear();
     });

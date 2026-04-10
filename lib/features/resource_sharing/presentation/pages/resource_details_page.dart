@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/models/resource_model.dart';
+import '../../data/services/resource_firestore_service.dart';
 import '../../../../shared/widgets/animated_app_background.dart';
 
 const _teal = Color(0xFF3D9E8C);
@@ -15,12 +18,29 @@ class ResourceDetailsPage extends StatefulWidget {
 }
 
 class _ResourceDetailsPageState extends State<ResourceDetailsPage> {
+  final ResourceFirestoreService _service = ResourceFirestoreService();
+  late ResourceModel _resource;
+  int _downloads = 0;
   int _likes = 0;
   int _dislikes = 0;
-  bool _liked = false;
-  bool _disliked = false;
+  ResourceReaction? _myReaction;
+  bool _isReacting = false;
+  bool _isDownloading = false;
 
-  ResourceModel get resource => widget.resource;
+  ResourceModel get resource => _resource;
+
+  bool get _liked => _myReaction == ResourceReaction.like;
+  bool get _disliked => _myReaction == ResourceReaction.dislike;
+
+  @override
+  void initState() {
+    super.initState();
+    _resource = widget.resource;
+    _downloads = _resource.downloads;
+    _likes = resource.likes;
+    _dislikes = resource.dislikes;
+    _loadMyReaction();
+  }
 
   String _formatDate(DateTime date) {
     final day = date.day.toString().padLeft(2, '0');
@@ -29,42 +49,209 @@ class _ResourceDetailsPageState extends State<ResourceDetailsPage> {
     return '$day/$month/$year';
   }
 
-  void _toggleLike() {
-    setState(() {
-      if (_liked) {
-        _liked = false;
-        _likes = (_likes - 1).clamp(0, 9999);
-      } else {
-        _liked = true;
-        _likes += 1;
-        if (_disliked) {
-          _disliked = false;
-          _dislikes = (_dislikes - 1).clamp(0, 9999);
-        }
+  Future<void> _loadMyReaction() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return;
+    }
+
+    try {
+      final reaction = await _service.getUserReaction(
+        resourceId: resource.id,
+        userId: user.uid,
+      );
+      if (!mounted) {
+        return;
       }
-    });
+      setState(() {
+        _myReaction = reaction;
+      });
+    } catch (_) {
+      // Keep page usable even if reaction read fails.
+    }
   }
 
-  void _toggleDislike() {
-    setState(() {
-      if (_disliked) {
-        _disliked = false;
-        _dislikes = (_dislikes - 1).clamp(0, 9999);
-      } else {
-        _disliked = true;
-        _dislikes += 1;
-        if (_liked) {
-          _liked = false;
-          _likes = (_likes - 1).clamp(0, 9999);
-        }
+  Future<void> _submitReaction(ResourceReaction next) async {
+    if (_isReacting) {
+      return;
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in to react to resources.')),
+      );
+      return;
+    }
+
+    final target = _myReaction == next ? null : next;
+
+    setState(() => _isReacting = true);
+    try {
+      final summary = await _service.setUserReaction(
+        resourceId: resource.id,
+        userId: user.uid,
+        reaction: target,
+      );
+
+      if (!mounted) {
+        return;
       }
-    });
+
+      setState(() {
+        _likes = summary.likes;
+        _dislikes = summary.dislikes;
+        _myReaction = summary.userReaction;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to update reaction. Please try again.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isReacting = false);
+      }
+    }
   }
 
-  void _downloadMock() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Download started (demo).')));
+  Future<void> _downloadFile() async {
+    if (_isDownloading) {
+      return;
+    }
+
+    setState(() => _isDownloading = true);
+    try {
+      final fileUrl = await _service.resolveDownloadUrl(resource);
+      final uri = _buildDownloadUri(fileUrl);
+      if (uri == null) {
+        throw const FormatException('Invalid URL');
+      }
+
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!launched) {
+        throw Exception('Could not launch URL');
+      }
+
+      await _service.incrementDownloadCount(resource.id);
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _downloads += 1;
+        _resource = _resource.copyWith(downloads: _downloads, fileUrl: fileUrl);
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to start download. Please try again.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isDownloading = false);
+      }
+    }
+  }
+
+  Uri? _buildDownloadUri(String rawUrl) {
+    final parsed = Uri.tryParse(rawUrl.trim());
+    if (parsed == null) {
+      return null;
+    }
+
+    final cloudinaryOriginal = _toOriginalCloudinaryUrl(
+      parsed,
+      fileName: resource.fileName,
+    );
+    if (cloudinaryOriginal != null) {
+      return cloudinaryOriginal;
+    }
+
+    final host = parsed.host.toLowerCase();
+    if (host.contains('drive.google.com')) {
+      final id = _googleDriveFileId(parsed);
+      if (id != null) {
+        return Uri.parse('https://drive.google.com/uc?export=download&id=$id');
+      }
+    }
+
+    if (host.contains('dropbox.com')) {
+      return parsed.replace(
+        queryParameters: {...parsed.queryParameters, 'dl': '1'},
+      );
+    }
+
+    return parsed;
+  }
+
+  Uri? _toOriginalCloudinaryUrl(Uri uri, {String? fileName}) {
+    if (!uri.host.toLowerCase().contains('res.cloudinary.com')) {
+      return null;
+    }
+
+    final segments = uri.pathSegments;
+    final uploadIndex = segments.indexOf('upload');
+    if (uploadIndex == -1 || uploadIndex + 1 >= segments.length) {
+      return uri;
+    }
+
+    var versionIndex = -1;
+    for (var i = uploadIndex + 1; i < segments.length; i++) {
+      if (RegExp(r'^v\d+$').hasMatch(segments[i])) {
+        versionIndex = i;
+        break;
+      }
+    }
+
+    final normalizedSegments = <String>[...segments.take(uploadIndex + 1)];
+
+    // fl_attachment forces browser/app to download instead of preview.
+    final safeName = (fileName ?? '').trim();
+    final attachmentSegment = safeName.isEmpty
+        ? 'fl_attachment'
+        : 'fl_attachment:${safeName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_')}';
+    normalizedSegments.add(attachmentSegment);
+
+    if (versionIndex == -1) {
+      normalizedSegments.addAll(segments.skip(uploadIndex + 1));
+    } else {
+      normalizedSegments.addAll(segments.skip(versionIndex));
+    }
+
+    final path = '/${normalizedSegments.join('/')}';
+    final query = uri.hasQuery ? '?${uri.query}' : '';
+    final fragment = uri.hasFragment ? '#${uri.fragment}' : '';
+
+    return Uri.parse('${uri.scheme}://${uri.authority}$path$query$fragment');
+  }
+
+  String? _googleDriveFileId(Uri uri) {
+    final idFromQuery = uri.queryParameters['id'];
+    if (idFromQuery != null && idFromQuery.isNotEmpty) {
+      return idFromQuery;
+    }
+
+    final segments = uri.pathSegments;
+    final fileIndex = segments.indexOf('d');
+    if (fileIndex != -1 && fileIndex + 1 < segments.length) {
+      return segments[fileIndex + 1];
+    }
+
+    return null;
   }
 
   @override
@@ -163,7 +350,7 @@ class _ResourceDetailsPageState extends State<ResourceDetailsPage> {
                       _detailRow(
                         icon: Icons.download_rounded,
                         label: 'Downloads',
-                        value: '${resource.downloads}',
+                        value: '$_downloads',
                       ),
                       const SizedBox(height: 16),
                       const Text(
@@ -183,7 +370,10 @@ class _ResourceDetailsPageState extends State<ResourceDetailsPage> {
                         children: [
                           Expanded(
                             child: OutlinedButton.icon(
-                              onPressed: _toggleLike,
+                              onPressed: _isReacting
+                                  ? null
+                                  : () =>
+                                        _submitReaction(ResourceReaction.like),
                               icon: Icon(
                                 _liked
                                     ? Icons.thumb_up_alt
@@ -200,7 +390,11 @@ class _ResourceDetailsPageState extends State<ResourceDetailsPage> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: OutlinedButton.icon(
-                              onPressed: _toggleDislike,
+                              onPressed: _isReacting
+                                  ? null
+                                  : () => _submitReaction(
+                                      ResourceReaction.dislike,
+                                    ),
                               icon: Icon(
                                 _disliked
                                     ? Icons.thumb_down_alt
@@ -237,16 +431,16 @@ class _ResourceDetailsPageState extends State<ResourceDetailsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'File: ${resource.fileType} • ${resource.fileSizeKb} KB',
+                'File: ${resource.fileName ?? 'Attached file'} • ${resource.fileSizeKb} KB',
                 style: TextStyle(color: Colors.blueGrey.shade700),
               ),
               const SizedBox(height: 10),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: _downloadMock,
+                  onPressed: _isDownloading ? null : _downloadFile,
                   icon: const Icon(Icons.download_rounded),
-                  label: const Text('Download'),
+                  label: Text(_isDownloading ? 'Downloading...' : 'Download'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _teal,
                     foregroundColor: Colors.white,

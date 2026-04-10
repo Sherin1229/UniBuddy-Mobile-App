@@ -9,8 +9,13 @@ class ResourceModel {
   final String uploadedBy;
   final DateTime uploadedAt;
   final int downloads;
+  final int likes;
+  final int dislikes;
   final String fileType;
   final int fileSizeKb;
+  final String? fileName;
+  final String? fileUrl;
+  final String? storagePath;
 
   const ResourceModel({
     required this.id,
@@ -21,8 +26,13 @@ class ResourceModel {
     required this.uploadedBy,
     required this.uploadedAt,
     required this.downloads,
+    required this.likes,
+    required this.dislikes,
     required this.fileType,
     required this.fileSizeKb,
+    this.fileName,
+    this.fileUrl,
+    this.storagePath,
   });
 
   ResourceModel copyWith({
@@ -34,8 +44,13 @@ class ResourceModel {
     String? uploadedBy,
     DateTime? uploadedAt,
     int? downloads,
+    int? likes,
+    int? dislikes,
     String? fileType,
     int? fileSizeKb,
+    String? fileName,
+    String? fileUrl,
+    String? storagePath,
   }) {
     return ResourceModel(
       id: id ?? this.id,
@@ -46,8 +61,13 @@ class ResourceModel {
       uploadedBy: uploadedBy ?? this.uploadedBy,
       uploadedAt: uploadedAt ?? this.uploadedAt,
       downloads: downloads ?? this.downloads,
+      likes: likes ?? this.likes,
+      dislikes: dislikes ?? this.dislikes,
       fileType: fileType ?? this.fileType,
       fileSizeKb: fileSizeKb ?? this.fileSizeKb,
+      fileName: fileName ?? this.fileName,
+      fileUrl: fileUrl ?? this.fileUrl,
+      storagePath: storagePath ?? this.storagePath,
     );
   }
 
@@ -72,8 +92,13 @@ class ResourceModel {
       uploadedBy: map['uploadedBy'] ?? '',
       uploadedAt: uploadedAt,
       downloads: map['downloads'] ?? 0,
+      likes: map['likes'] ?? 0,
+      dislikes: map['dislikes'] ?? 0,
       fileType: map['fileType'] ?? 'PDF',
       fileSizeKb: map['fileSizeKb'] ?? 0,
+      fileName: map['fileName'] as String?,
+      fileUrl: map['fileUrl'] as String?,
+      storagePath: map['storagePath'] as String?,
     );
   }
 
@@ -86,8 +111,13 @@ class ResourceModel {
       'uploadedBy': uploadedBy,
       'uploadedAt': Timestamp.fromDate(uploadedAt),
       'downloads': downloads,
+      'likes': likes,
+      'dislikes': dislikes,
       'fileType': fileType,
       'fileSizeKb': fileSizeKb,
+      'fileName': fileName,
+      'fileUrl': fileUrl,
+      'storagePath': storagePath,
     };
   }
 }
