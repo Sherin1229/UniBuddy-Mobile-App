@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../../../../shared/widgets/animated_app_background.dart';
+import '../../../resource_sharing/data/models/resource_model.dart';
+import '../../../resource_sharing/presentation/state/resource_library_provider.dart';
 
 class ResourceAnalyticsPage extends StatefulWidget {
   const ResourceAnalyticsPage({super.key});
@@ -9,52 +13,29 @@ class ResourceAnalyticsPage extends StatefulWidget {
 }
 
 class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
-  final List<_UploadedResource> _resources = [
-    const _UploadedResource(
-      title: 'OOP Midterm Past Paper 2023',
-      subject: 'Object Oriented Programming',
-      description: 'Comprehensive past paper covering core OOP concepts.',
-      views: 312,
-      downloads: 148,
-      likes: 84,
-      dislikes: 12,
-    ),
-    const _UploadedResource(
-      title: 'Database Normalization Cheat Sheet',
-      subject: 'Database Systems',
-      description: 'A quick reference for 1NF, 2NF, and 3NF.',
-      views: 255,
-      downloads: 126,
-      likes: 72,
-      dislikes: 8,
-    ),
-    const _UploadedResource(
-      title: 'Networking Layer Model Summary',
-      subject: 'Computer Networks',
-      description: 'Summary of OSI and TCP/IP layers.',
-      views: 184,
-      downloads: 92,
-      likes: 58,
-      dislikes: 5,
-    ),
-    const _UploadedResource(
-      title: 'Flutter State Management Notes',
-      subject: 'Mobile Application Development',
-      description: 'Notes on Provider, Riverpod, and Bloc.',
-      views: 228,
-      downloads: 109,
-      likes: 91,
-      dislikes: 7,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final provider = context.read<ResourceLibraryProvider>();
+      provider.setFilter('All');
+      provider.setSearch('');
+      provider.loadResources();
+    });
+  }
 
-  void _onEdit(_UploadedResource resource) {
+  Future<void> _onEdit(ResourceModel resource) async {
     final titleController = TextEditingController(text: resource.title);
     final subjectController = TextEditingController(text: resource.subject);
-    final descriptionController = TextEditingController(text: resource.description);
+    final descriptionController = TextEditingController(
+      text: resource.description,
+    );
     final formKey = GlobalKey<FormState>();
 
-    showDialog(
+    await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
@@ -89,10 +70,14 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: const Icon(Icons.title, color: Color(0xFF0F766E)),
+                    prefixIcon: const Icon(
+                      Icons.title,
+                      color: Color(0xFF0F766E),
+                    ),
                   ),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Please enter a title' : null,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter a title'
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -106,10 +91,14 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: const Icon(Icons.book, color: Color(0xFF0F766E)),
+                    prefixIcon: const Icon(
+                      Icons.book,
+                      color: Color(0xFF0F766E),
+                    ),
                   ),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Please enter a subject' : null,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter a subject'
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -124,7 +113,10 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: const Icon(Icons.description, color: Color(0xFF0F766E)),
+                    prefixIcon: const Icon(
+                      Icons.description,
+                      color: Color(0xFF0F766E),
+                    ),
                   ),
                 ),
               ],
@@ -137,23 +129,37 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
             child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                final index = _resources.indexOf(resource);
-                if (index != -1) {
-                  setState(() {
-                    _resources[index] = resource.copyWith(
-                      title: titleController.text,
-                      subject: subjectController.text,
-                      description: descriptionController.text,
-                    );
-                  });
-                }
+            onPressed: () async {
+              if (!formKey.currentState!.validate()) {
+                return;
+              }
+
+              final provider = this.context.read<ResourceLibraryProvider>();
+              final result = await provider.updateResource(
+                resource.copyWith(
+                  title: titleController.text.trim(),
+                  subject: subjectController.text.trim(),
+                  description: descriptionController.text.trim(),
+                ),
+              );
+
+              if (!mounted) {
+                return;
+              }
+
+              if (result == null) {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
+                ScaffoldMessenger.of(this.context).showSnackBar(
                   const SnackBar(
                     content: Text('Resource updated successfully'),
                     backgroundColor: Color(0xFF0F766E),
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  SnackBar(
+                    content: Text(result),
+                    backgroundColor: const Color(0xFFB91C1C),
                   ),
                 );
               }
@@ -172,36 +178,79 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
     );
   }
 
-  void _onDelete(_UploadedResource resource) {
-    setState(() {
-      _resources.remove(resource);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Deleted "${resource.title}"'),
-        backgroundColor: const Color(0xFFB91C1C),
+  Future<void> _onDelete(ResourceModel resource) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Resource'),
+        content: Text('Delete "${resource.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFB91C1C),
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
+
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    final provider = context.read<ResourceLibraryProvider>();
+    final result = await provider.deleteResource(resource.id);
+    if (!mounted) {
+      return;
+    }
+
+    if (result == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Deleted "${resource.title}"'),
+          backgroundColor: const Color(0xFFB91C1C),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result),
+          backgroundColor: const Color(0xFFB91C1C),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     const primary = Color(0xFF0F766E);
+    final provider = context.watch<ResourceLibraryProvider>();
+    final state = provider.state;
+    final userUid = FirebaseAuth.instance.currentUser?.uid;
+    final resources = state.resources
+        .where((resource) => resource.uploadedByUid == userUid)
+        .toList();
 
-    final totalUploads = _resources.length;
-    final totalDownloads = _resources.fold<int>(
+    final totalUploads = resources.length;
+    final totalDownloads = resources.fold<int>(
       0,
       (sum, resource) => sum + resource.downloads,
     );
-    final totalViews = _resources.fold<int>(
+    final totalViews = resources.fold<int>(
       0,
-      (sum, resource) => sum + resource.views,
+      (sum, resource) => sum + _resourceViewsEstimate(resource),
     );
-    final totalLikes = _resources.fold<int>(
+    final totalLikes = resources.fold<int>(
       0,
       (sum, resource) => sum + resource.likes,
     );
-    final totalDislikes = _resources.fold<int>(
+    final totalDislikes = resources.fold<int>(
       0,
       (sum, resource) => sum + resource.dislikes,
     );
@@ -214,7 +263,7 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
         : '0.0';
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFFE6FFFB),
       appBar: AppBar(
         title: const Text('My Contributions'),
         backgroundColor: primary,
@@ -310,8 +359,8 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
                             number: totalUploads.toString(),
                             label: 'Total Uploads',
                             color: const Color(0xFF0F766E),
-                            backgroundColor: const Color(0xFFE6FFFB),
-                            accentColor: const Color(0xFF99F6E4),
+                            backgroundColor: Colors.white,
+                            accentColor: const Color(0xFF5EEAD4),
                           ),
                         ),
                         SizedBox(
@@ -321,9 +370,9 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
                             icon: Icons.download_rounded,
                             number: totalDownloads.toString(),
                             label: 'Total Downloads',
-                            color: const Color(0xFF1E40AF),
-                            backgroundColor: const Color(0xFFEFF6FF),
-                            accentColor: const Color(0xFFBFDBFE),
+                            color: const Color(0xFF0E7490),
+                            backgroundColor: Colors.white,
+                            accentColor: const Color(0xFF67E8F9),
                           ),
                         ),
                         SizedBox(
@@ -333,9 +382,9 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
                             icon: Icons.visibility_rounded,
                             number: totalViews.toString(),
                             label: 'Total Views',
-                            color: const Color(0xFFC2410C),
-                            backgroundColor: const Color(0xFFFEF3C7),
-                            accentColor: const Color(0xFFFCD34D),
+                            color: const Color(0xFF047857),
+                            backgroundColor: Colors.white,
+                            accentColor: const Color(0xFF86EFAC),
                           ),
                         ),
                         SizedBox(
@@ -363,20 +412,43 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${_resources.length} resources in your library',
+                  '${resources.length} resources in your library',
                   style: TextStyle(
                     color: Colors.blueGrey.shade700,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 10),
-                ..._resources.map(
-                  (resource) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: _resourceCard(resource),
+                if (state.isLoading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 28),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (state.error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Text(
+                        state.error!,
+                        style: TextStyle(color: Colors.red.shade800),
+                      ),
+                    ),
+                  )
+                else
+                  ...resources.map(
+                    (resource) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _resourceCard(resource),
+                    ),
                   ),
-                ),
-                if (_resources.isEmpty)
+                if (!state.isLoading && resources.isEmpty)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
@@ -422,7 +494,7 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: backgroundColor.withOpacity(0.6),
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: accentColor.withOpacity(0.4), width: 1.5),
         boxShadow: [
@@ -469,7 +541,7 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
     );
   }
 
-  Widget _resourceCard(_UploadedResource resource) {
+  Widget _resourceCard(ResourceModel resource) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -505,7 +577,7 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
             children: [
               _statPill(
                 icon: Icons.visibility_outlined,
-                text: '${resource.views} views',
+                text: '${_resourceViewsEstimate(resource)} views',
               ),
               const SizedBox(width: 8),
               _statPill(
@@ -560,15 +632,15 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF3C7).withOpacity(0.5),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFFCD34D).withOpacity(0.5),
+          color: const Color(0xFF6EE7B7).withOpacity(0.55),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFF59E0B).withOpacity(0.08),
+            color: const Color(0xFF10B981).withOpacity(0.1),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -579,11 +651,11 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           CircleAvatar(
-            backgroundColor: const Color(0xFFFCD34D).withOpacity(0.3),
+            backgroundColor: const Color(0xFF6EE7B7).withOpacity(0.3),
             radius: 20,
             child: const Icon(
               Icons.favorite_rounded,
-              color: Color(0xFFC2410C),
+              color: Color(0xFF0F766E),
               size: 22,
             ),
           ),
@@ -598,7 +670,7 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF15803D),
+                        color: Color(0xFF0F766E),
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -607,7 +679,7 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF15803D),
+                        color: Color(0xFF0F766E),
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -621,7 +693,7 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
               Container(
                 width: 1.5,
                 height: 50,
-                color: const Color(0xFFD97706).withOpacity(0.25),
+                color: const Color(0xFF0E7490).withOpacity(0.3),
               ),
               Expanded(
                 child: Padding(
@@ -634,7 +706,7 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFFB91C1C),
+                          color: Color(0xFF0E7490),
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -643,7 +715,7 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFFB91C1C),
+                          color: Color(0xFF0E7490),
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -661,44 +733,8 @@ class _ResourceAnalyticsPageState extends State<ResourceAnalyticsPage> {
       ),
     );
   }
-}
 
-class _UploadedResource {
-  final String title;
-  final String subject;
-  final String description;
-  final int views;
-  final int downloads;
-  final int likes;
-  final int dislikes;
-
-  const _UploadedResource({
-    required this.title,
-    required this.subject,
-    required this.description,
-    required this.views,
-    required this.downloads,
-    required this.likes,
-    required this.dislikes,
-  });
-
-  _UploadedResource copyWith({
-    String? title,
-    String? subject,
-    String? description,
-    int? views,
-    int? downloads,
-    int? likes,
-    int? dislikes,
-  }) {
-    return _UploadedResource(
-      title: title ?? this.title,
-      subject: subject ?? this.subject,
-      description: description ?? this.description,
-      views: views ?? this.views,
-      downloads: downloads ?? this.downloads,
-      likes: likes ?? this.likes,
-      dislikes: dislikes ?? this.dislikes,
-    );
+  int _resourceViewsEstimate(ResourceModel resource) {
+    return resource.downloads + resource.likes + resource.dislikes;
   }
 }
