@@ -7,6 +7,7 @@ class ResourceModel {
   final String subject;
   final String description;
   final String uploadedBy;
+  final String? uploadedByUid;
   final DateTime uploadedAt;
   final int downloads;
   final int likes;
@@ -24,6 +25,7 @@ class ResourceModel {
     required this.subject,
     required this.description,
     required this.uploadedBy,
+    this.uploadedByUid,
     required this.uploadedAt,
     required this.downloads,
     required this.likes,
@@ -42,6 +44,7 @@ class ResourceModel {
     String? subject,
     String? description,
     String? uploadedBy,
+    String? uploadedByUid,
     DateTime? uploadedAt,
     int? downloads,
     int? likes,
@@ -59,6 +62,7 @@ class ResourceModel {
       subject: subject ?? this.subject,
       description: description ?? this.description,
       uploadedBy: uploadedBy ?? this.uploadedBy,
+      uploadedByUid: uploadedByUid ?? this.uploadedByUid,
       uploadedAt: uploadedAt ?? this.uploadedAt,
       downloads: downloads ?? this.downloads,
       likes: likes ?? this.likes,
@@ -90,6 +94,7 @@ class ResourceModel {
       subject: map['subject'] ?? '',
       description: map['description'] ?? '',
       uploadedBy: map['uploadedBy'] ?? '',
+      uploadedByUid: map['uploadedByUid'] as String?,
       uploadedAt: uploadedAt,
       downloads: map['downloads'] ?? 0,
       likes: map['likes'] ?? 0,
@@ -109,6 +114,7 @@ class ResourceModel {
       'subject': subject,
       'description': description,
       'uploadedBy': uploadedBy,
+      'uploadedByUid': uploadedByUid,
       'uploadedAt': Timestamp.fromDate(uploadedAt),
       'downloads': downloads,
       'likes': likes,

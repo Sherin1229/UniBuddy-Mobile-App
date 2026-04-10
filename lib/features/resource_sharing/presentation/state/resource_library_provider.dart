@@ -100,6 +100,14 @@ class ResourceLibraryProvider extends ChangeNotifier {
       }
     }
 
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      final message = 'Authentication failed. Please sign in and try again.';
+      _state = _state.copyWith(isSubmitting: false, error: message);
+      notifyListeners();
+      return message;
+    }
+
     if (fileBytes == null || fileName == null || fileName.trim().isEmpty) {
       final message = 'Please attach a file before uploading.';
       _state = _state.copyWith(isSubmitting: false, error: message);
@@ -129,6 +137,7 @@ class ResourceLibraryProvider extends ChangeNotifier {
       subject: subject,
       description: description,
       uploadedBy: uploadedBy,
+      uploadedByUid: currentUser.uid,
       uploadedAt: DateTime.now(),
       downloads: 0,
       likes: 0,
