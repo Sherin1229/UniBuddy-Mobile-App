@@ -1,5 +1,6 @@
 import '../models/resource_model.dart';
 import '../services/resource_firestore_service.dart';
+import 'dart:typed_data';
 
 class ResourceRepository {
   final _service = ResourceFirestoreService();
@@ -10,8 +11,17 @@ class ResourceRepository {
   Stream<List<ResourceModel>> searchResources(String query) =>
       _service.searchResources(query);
 
-  Future<void> createResource(ResourceModel resource) =>
-      _service.createResource(resource);
+  Future<void> createResource(
+    ResourceModel resource, {
+    Uint8List? fileBytes,
+    String? fileName,
+    String? externalFileUrl,
+  }) => _service.createResource(
+    resource,
+    fileBytes: fileBytes,
+    fileName: fileName,
+    externalFileUrl: externalFileUrl,
+  );
 
   Future<void> updateResource(ResourceModel resource) =>
       _service.updateResource(resource);
