@@ -285,13 +285,13 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
                 children: [
                   // ── Request card ──
                   Card(
-                    color: const Color(0xFFFFFFFF),
+                    color: const Color(0xFFF5FBF7),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                       side: BorderSide(
-                        color: const Color(0xFFDDEEE4),
-                        width: 1,
+                        color: const Color(0xFFBAD8C1),
+                        width: 1.4,
                       ),
                     ),
                     child: Padding(
@@ -334,13 +334,15 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
                             ],
                           ),
                           const SizedBox(height: 14),
-                          Wrap(
-                            spacing: 16,
-                            runSpacing: 6,
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _metaText('Owner', request.ownerName),
+                              const SizedBox(height: 8),
                               _metaText('Subject', request.subject),
+                              const SizedBox(height: 8),
                               _metaText('Deadline', deadlineStr),
+                              const SizedBox(height: 8),
                               _metaText('Comments', '$_commentCount'),
                             ],
                           ),
@@ -522,11 +524,11 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
               children: [
                 CircleAvatar(
                   radius: 16,
-                  backgroundColor: const Color(0xFFDDF5EB),
+                  backgroundColor: const Color(0xFFE5E7EB),
                   child: Text(
                     avatarChar,
                     style: const TextStyle(
-                        color: Color(0xFF0F766E),
+                        color: Color(0xFF334155),
                         fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -534,19 +536,19 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
                 Text(displayName,
                     style: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F766E))),
+                        color: Color(0xFF334155))),
                 if (r.isOwner)
                   Container(
                     margin: const EdgeInsets.only(left: 8),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFE4E6),
+                      color: const Color(0xFFE2E8F0),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Text('OWNER',
+                    child: const Text('Owner',
                         style: TextStyle(
-                            color: Color(0xFFB91C1C),
+                            color: Color(0xFF334155),
                             fontSize: 11,
                             fontWeight: FontWeight.bold)),
                   ),

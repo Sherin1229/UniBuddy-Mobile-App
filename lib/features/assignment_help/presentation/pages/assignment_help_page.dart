@@ -122,6 +122,7 @@ class _AssignmentHelpPageState extends State<AssignmentHelpPage> {
               int myRequestCount = 0;
               int myOpenCount = 0;
               int mySolvedCount = 0;
+              int myOverdueCount = 0;
 
               if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
                 allRequests = snapshot.data!.docs.map((doc) {
@@ -143,6 +144,9 @@ class _AssignmentHelpPageState extends State<AssignmentHelpPage> {
                 mySolvedCount = myRequests
                     .where((r) => r.status == HelpRequestStatus.solved)
                     .length;
+                myOverdueCount = myRequests
+                    .where((r) => r.status == HelpRequestStatus.overdue)
+                    .length;
               }
 
               final filtered = _applyFilters(allRequests);
@@ -154,170 +158,200 @@ class _AssignmentHelpPageState extends State<AssignmentHelpPage> {
                     myRequests: myRequestCount,
                     openRequests: myOpenCount,
                     solvedRequests: mySolvedCount,
+                    overdueRequests: myOverdueCount,
                   ),
-                  // ── Search + Filter box ──
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        color: Colors.white.withOpacity(0.62),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.75),
-                          width: 1.2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
-                            blurRadius: 18,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          // Search Bar
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 8),
-                            child: TextField(
-                              controller: _searchController,
-                              onChanged: (v) =>
-                                  setState(() => _searchQuery = v.toLowerCase()),
-                              decoration: const InputDecoration(
-                                hintText: 'Search help requests...',
-                                hintStyle: TextStyle(
-                                    color: Color(0xFF9CA3AF), fontSize: 14),
-                                prefixIcon: Icon(Icons.search,
-                                    color: Color(0xFF9CA3AF), size: 20),
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 14),
+                  Expanded(
+                    child: CustomScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      slivers: [
+                        SliverPersistentHeader(
+                          pinned: true,
+                          delegate: _SliverSearchHeaderDelegate(
+                            minExtent: 176,
+                            maxExtent: 176,
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(18),
+                                  color: Colors.white.withOpacity(0.94),
+                                  border: Border.all(
+                                    color: const Color(0xFFE1EEE6),
+                                    width: 1.2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.06),
+                                      blurRadius: 18,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 10),
+                                      child: TextField(
+                                        controller: _searchController,
+                                        onChanged: (v) => setState(
+                                            () => _searchQuery = v.toLowerCase()),
+                                        decoration: const InputDecoration(
+                                          hintText: 'Search help requests...',
+                                          hintStyle: TextStyle(
+                                              color: Color(0xFF6B7280),
+                                              fontSize: 14),
+                                          prefixIcon: Icon(Icons.search,
+                                              color: Color(0xFF6B7280),
+                                              size: 20),
+                                          border: InputBorder.none,
+                                          filled: true,
+                                          fillColor: Color(0xFFF4FAF6),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              horizontal: 16, vertical: 14),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.all(
+                                                Radius.circular(18)),
+                                            borderSide: BorderSide.none,
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.all(
+                                                Radius.circular(18)),
+                                            borderSide: BorderSide.none,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 8, right: 8, bottom: 8),
+                                        child: Row(
+                                          children: [
+                                            _buildFilterTab(0, 'All'),
+                                            const SizedBox(width: 12),
+                                            _buildFilterTab(1, 'My Requests'),
+                                            const SizedBox(width: 12),
+                                            _buildFilterTab(2, 'Open'),
+                                            const SizedBox(width: 12),
+                                            _buildFilterTab(3, 'Solved'),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                          // Filter Tabs
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 8, right: 8, bottom: 8),
-                              child: Row(
+                        ),
+                        const SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(18, 0, 0, 6),
+                            child: Text(
+                              'Help Requests',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1F2937),
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting)
+                          const SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                  color: primaryBrand),
+                            ),
+                          )
+                        else if (snapshot.hasError)
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: Text(
+                                'Error loading requests.\nPlease try again.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    color: Colors.white.withOpacity(0.8)),
+                              ),
+                            ),
+                          )
+                        else if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  _buildFilterTab(0, 'All'),
-                                  const SizedBox(width: 12),
-                                  _buildFilterTab(1, 'My Requests'),
-                                  const SizedBox(width: 12),
-                                  _buildFilterTab(2, 'Open'),
-                                  const SizedBox(width: 12),
-                                  _buildFilterTab(3, 'Solved'),
+                                  Icon(Icons.inbox_outlined,
+                                      size: 60,
+                                      color: Colors.white.withOpacity(0.6)),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No help requests yet.\nBe the first to post one!',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.white.withOpacity(0.8),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(18, 0, 0, 6),
-                    child: Text(
-                      'Help Requests',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F2937),
-                      ),
-                    ),
-                  ),
-
-                  Expanded(
-                    child: Builder(
-                      builder: (context) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(
-                                color: primaryBrand),
-                          );
-                        }
-
-                        if (snapshot.hasError) {
-                          return Center(
-                            child: Text(
-                              'Error loading requests.\nPlease try again.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  color: Colors.white.withOpacity(0.8)),
-                            ),
-                          );
-                        }
-
-                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.inbox_outlined,
-                                    size: 60,
-                                    color: Colors.white.withOpacity(0.6)),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No help requests yet.\nBe the first to post one!',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white.withOpacity(0.8),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-
-                        if (filtered.isEmpty) {
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.search_off,
-                                    size: 60,
-                                    color: Colors.white.withOpacity(0.6)),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No requests match your filter.',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white.withOpacity(0.8),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-
-                        return ListView.builder(
-                          padding:
-                              const EdgeInsets.fromLTRB(12, 0, 12, 90),
-                          itemCount: filtered.length,
-                          itemBuilder: (context, index) {
-                            return HelpCard(
-                              request: filtered[index],
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => HelpRequestDetailsPage(
-                                      request: filtered[index],
+                          )
+                        else if (filtered.isEmpty)
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.search_off,
+                                      size: 60,
+                                      color: Colors.white.withOpacity(0.6)),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No requests match your filter.',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.white.withOpacity(0.8),
                                     ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        else
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                return Padding(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                                  child: HelpCard(
+                                    request: filtered[index],
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => HelpRequestDetailsPage(
+                                            request: filtered[index],
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   ),
                                 );
                               },
-                            );
-                          },
-                        );
-                      },
+                              childCount: filtered.length,
+                            ),
+                          ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                      ],
                     ),
                   ),
                 ],
@@ -333,6 +367,7 @@ class _AssignmentHelpPageState extends State<AssignmentHelpPage> {
     required int myRequests,
     required int openRequests,
     required int solvedRequests,
+    required int overdueRequests,
   }) {
     final displayName = FirebaseAuth.instance.currentUser?.displayName ?? 'Student';
 
@@ -374,18 +409,12 @@ class _AssignmentHelpPageState extends State<AssignmentHelpPage> {
                 children: [
                   Text(
                     'Hi, $displayName',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF0F766E),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'You have $myRequests requests, $openRequests open, $solvedRequests solved.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
                     ),
                   ),
                 ],
@@ -410,14 +439,21 @@ class _AssignmentHelpPageState extends State<AssignmentHelpPage> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _buildCountChip('Total', myRequests, const Color(0xFFE0F2FE)),
-                    const SizedBox(width: 6),
-                    _buildCountChip('Open', openRequests, const Color(0xFFD9F7FF)),
-                    const SizedBox(width: 6),
-                    _buildCountChip('Solved', solvedRequests, const Color(0xFFE6F4EA)),
-                  ],
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildCountChip('Total', myRequests, const Color(0xFFFDE68A)),
+                      const SizedBox(width: 6),
+                      _buildCountChip('Open', openRequests, const Color(0xFFDBEAFE)),
+                      const SizedBox(width: 6),
+                      _buildCountChip('Solved', solvedRequests, const Color(0xFFE6F4EA)),
+                      if (overdueRequests > 0) ...[
+                        const SizedBox(width: 6),
+                        _buildCountChip('Overdue', overdueRequests, const Color(0xFFFECACA)),
+                      ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -484,5 +520,35 @@ class _AssignmentHelpPageState extends State<AssignmentHelpPage> {
         ),
       ),
     );
+  }
+}
+
+class _SliverSearchHeaderDelegate extends SliverPersistentHeaderDelegate {
+  @override
+  final double minExtent;
+  @override
+  final double maxExtent;
+  final Widget child;
+
+  _SliverSearchHeaderDelegate({
+    required this.minExtent,
+    required this.maxExtent,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context,
+      double shrinkOffset, bool overlapsContent) {
+    return Material(
+      color: Colors.transparent,
+      child: child,
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _SliverSearchHeaderDelegate oldDelegate) {
+    return oldDelegate.child != child ||
+        oldDelegate.minExtent != minExtent ||
+        oldDelegate.maxExtent != maxExtent;
   }
 }

@@ -22,7 +22,6 @@ class _HelpRequestFormPageState extends State<HelpRequestFormPage> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
 
-  String? _selectedSubject;
   PlatformFile? _pickedFile;
   bool _isSubmitting = false;
 
@@ -34,17 +33,6 @@ class _HelpRequestFormPageState extends State<HelpRequestFormPage> {
       _ownerNameController.text = currentUser!.displayName!;
     }
   }
-
-  final List<String> _subjects = [
-    'Database Systems',
-    'Programming',
-    'Mathematics',
-    'Physics',
-    'Chemistry',
-    'Biology',
-    'English',
-    'Other',
-  ];
 
   @override
   void dispose() {
@@ -87,9 +75,9 @@ class _HelpRequestFormPageState extends State<HelpRequestFormPage> {
       return;
     }
 
-    if (_selectedSubject == null) {
+    if (_subjectController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a subject')),
+        const SnackBar(content: Text('Please enter a subject')),
       );
       return;
     }
@@ -108,7 +96,7 @@ class _HelpRequestFormPageState extends State<HelpRequestFormPage> {
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         createdAt: DateTime.now(),
         title: _titleController.text.trim(),
-        subject: _selectedSubject!,
+        subject: _subjectController.text.trim(),
         ownerId: currentUser?.uid ?? '',
         ownerName: _ownerNameController.text.trim(),
         description: _descriptionController.text.trim(),
@@ -152,7 +140,7 @@ class _HelpRequestFormPageState extends State<HelpRequestFormPage> {
     return InputDecoration(
       labelText: label,
       filled: true,
-      fillColor: const Color(0xFFEFFBF6),
+      fillColor: const Color(0xFFD6EDE0),
       suffixIcon: suffixIcon,
       contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       border: OutlineInputBorder(
@@ -161,11 +149,11 @@ class _HelpRequestFormPageState extends State<HelpRequestFormPage> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(18),
-        borderSide: BorderSide(color: const Color(0xFFD6EDE0)),
+        borderSide: BorderSide(color: const Color(0xFF9AC8AB)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(18),
-        borderSide: BorderSide(color: const Color(0xFF78C4A7), width: 1.5),
+        borderSide: BorderSide(color: const Color(0xFF0F766E), width: 1.8),
       ),
     );
   }
@@ -205,12 +193,10 @@ class _HelpRequestFormPageState extends State<HelpRequestFormPage> {
                 Row(
                   children: [
                     Expanded(
-                      child: DropdownButtonFormField<String>(
-                        initialValue: _selectedSubject,
-                        items: _subjects.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
-                        onChanged: (v) => setState(() => _selectedSubject = v),
+                      child: TextFormField(
+                        controller: _subjectController,
                         decoration: _buildInputDecoration('Subject'),
-                        validator: (v) => v == null || v.isEmpty ? 'Subject is required' : null,
+                        validator: (v) => v == null || v.trim().isEmpty ? 'Subject is required' : null,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -300,16 +286,19 @@ class _HelpRequestFormPageState extends State<HelpRequestFormPage> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(160, 48),
-                      backgroundColor: const Color(0xFFDDF5EB),
-                      foregroundColor: const Color(0xFF0F766E),
-                      elevation: 0,
+                      backgroundColor: const Color(0xFF0F766E),
+                      foregroundColor: Colors.white,
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
                     ),
                     onPressed: _isSubmitting ? null : _submitForm,
                     child: _isSubmitting
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0F766E)),
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                           )
                         : const Text('Submit'),
                   ),
