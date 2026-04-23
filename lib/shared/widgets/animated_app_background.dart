@@ -95,8 +95,8 @@ class _AnimatedAppBackgroundState extends State<AnimatedAppBackground>
   }
 
   Color _scaledOpacityColor(Color color, double factor) {
-    final scaled = (color.opacity * factor).clamp(0.0, 1.0);
-    return color.withOpacity(scaled);
+    final scaled = (color.a * factor).clamp(0.0, 1.0);
+    return color.withValues(alpha: scaled);
   }
 
   Widget _movingBlob({
@@ -114,7 +114,7 @@ class _AnimatedAppBackgroundState extends State<AnimatedAppBackground>
           color: color,
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.7),
+              color: color.withValues(alpha: 0.7),
               blurRadius: 80,
               spreadRadius: 18,
             ),

@@ -7,10 +7,12 @@ class AppColors {
 
   // 🟢 PRIMARY BRAND COLORS
   /// Primary Brand Color (AppBar / Main Nav)
-  static const Color primaryBrand = Color(0xFF0F766E); // Deep Teal
+  static const Color primaryBrand = Color(
+    0xFF3D9E8C,
+  ); // Light Teal (Main Branch)
 
   /// Primary Dark Variant
-  static const Color primaryDark = Color(0xFF115E59); // Dark Teal
+  static const Color primaryDark = Color(0xFF2E8B7D); // Dark Teal Variant
 
   /// Accent / CTA Buttons
   static const Color accent = Color(0xFF14B8A6); // Bright Teal
@@ -56,8 +58,9 @@ class AppColors {
 
   // Opacity variants
   static Color primaryBrandWithOpacity(double opacity) =>
-      primaryBrand.withOpacity(opacity);
-  static Color accentWithOpacity(double opacity) => accent.withOpacity(opacity);
+      primaryBrand.withValues(alpha: opacity);
+  static Color accentWithOpacity(double opacity) =>
+      accent.withValues(alpha: opacity);
   static Color backgroundWithOpacity(double opacity) =>
-      backgroundLight.withOpacity(opacity);
+      backgroundLight.withValues(alpha: opacity);
 }
