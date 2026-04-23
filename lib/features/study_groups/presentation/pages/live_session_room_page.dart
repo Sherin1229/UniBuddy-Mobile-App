@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
-import '../../../resource_sharing/data/models/resource_model.dart';
-import '../../../resource_sharing/presentation/pages/resource_details_page.dart';
-import '../../../resource_sharing/presentation/state/resource_library_provider.dart';
+import 'package:unibuddy/core/theme/app_colors.dart';
+import 'package:unibuddy/shared/widgets/animated_app_background.dart';
 
 class LiveSessionRoomPage extends StatefulWidget {
   final String groupName;
@@ -63,13 +60,6 @@ class _LiveSessionRoomPageState extends State<LiveSessionRoomPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final provider = context.read<ResourceLibraryProvider>();
-      if (provider.state.resources.isEmpty && !provider.state.isLoading) {
-        provider.loadResources();
-      }
-    });
   }
 
   @override
@@ -176,105 +166,111 @@ class _LiveSessionRoomPageState extends State<LiveSessionRoomPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF050E21),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _TopBar(
-              groupName: widget.groupName,
-              subject: widget.subject,
-              joinedCount: widget.joinedCount,
-              sessionTitle: widget.sessionTitle,
-              onBack: () => Navigator.of(context).pop(),
-            ),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final compact = constraints.maxWidth < 1024;
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        children: [
+          const AnimatedAppBackground(),
+          SafeArea(
+            child: Column(
+              children: [
+                _TopBar(
+                  groupName: widget.groupName,
+                  subject: widget.subject,
+                  joinedCount: widget.joinedCount,
+                  sessionTitle: widget.sessionTitle,
+                  onBack: () => Navigator.of(context).pop(),
+                ),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact = constraints.maxWidth < 1024;
 
-                  final content = Column(
-                    children: [
-                      _SessionTabs(
-                        activeTab: _activeTab,
-                        onChange: (tab) => setState(() => _activeTab = tab),
-                      ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                          child: _activeTab == _LiveTab.notes
-                              ? _NotesPanel(
-                                  notes: _notes,
-                                  formatTime: _formatTime,
-                                  onEdit: (index) =>
-                                      _showNoteEditor(editIndex: index),
-                                  onAdd: _showNoteEditor,
-                                )
-                              : _ResourcesPanel(
-                                  subject: widget.subject,
-                                  onOpenResource: (resource) {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => ResourceDetailsPage(
-                                          resource: resource,
+                      final content = Column(
+                        children: [
+                          _SessionTabs(
+                            activeTab: _activeTab,
+                            onChange: (tab) => setState(() => _activeTab = tab),
+                          ),
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                14,
+                                12,
+                                14,
+                                12,
+                              ),
+                              child: _activeTab == _LiveTab.notes
+                                  ? _NotesPanel(
+                                      notes: _notes,
+                                      formatTime: _formatTime,
+                                      onEdit: (index) =>
+                                          _showNoteEditor(editIndex: index),
+                                      onAdd: _showNoteEditor,
+                                    )
+                                  : Center(
+                                      child: Text(
+                                        'Resources coming soon',
+                                        style: TextStyle(
+                                          color: AppColors.textSecondary,
+                                          fontSize: 14,
                                         ),
                                       ),
-                                    );
-                                  },
-                                ),
-                        ),
-                      ),
-                    ],
-                  );
-
-                  final chat = _ChatPanel(
-                    messages: _messages,
-                    controller: _messageController,
-                    scrollController: _chatScrollController,
-                    onSend: _sendMessage,
-                    formatTime: _formatTime,
-                  );
-
-                  if (compact) {
-                    return Column(
-                      children: [
-                        Expanded(child: content),
-                        Container(
-                          height: 260,
-                          decoration: BoxDecoration(
-                            border: Border(
-                              top: BorderSide(
-                                color: Colors.white.withValues(alpha: 0.08),
-                              ),
+                                    ),
                             ),
                           ),
-                          child: chat,
-                        ),
-                      ],
-                    );
-                  }
+                        ],
+                      );
 
-                  return Row(
-                    children: [
-                      Expanded(child: content),
-                      SizedBox(width: 320, child: chat),
-                    ],
-                  );
-                },
-              ),
+                      final chat = _ChatPanel(
+                        messages: _messages,
+                        controller: _messageController,
+                        scrollController: _chatScrollController,
+                        onSend: _sendMessage,
+                        formatTime: _formatTime,
+                      );
+
+                      if (compact) {
+                        return Column(
+                          children: [
+                            Expanded(child: content),
+                            Container(
+                              height: 260,
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  top: BorderSide(color: AppColors.border),
+                                ),
+                              ),
+                              child: chat,
+                            ),
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        children: [
+                          Expanded(child: content),
+                          SizedBox(width: 320, child: chat),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                _BottomControls(
+                  micOn: _micOn,
+                  videoOn: _videoOn,
+                  screenSharing: _isScreenSharing,
+                  handRaised: _handRaised,
+                  onToggleMic: () => setState(() => _micOn = !_micOn),
+                  onToggleVideo: () => setState(() => _videoOn = !_videoOn),
+                  onToggleScreen: () =>
+                      setState(() => _isScreenSharing = !_isScreenSharing),
+                  onToggleHand: () =>
+                      setState(() => _handRaised = !_handRaised),
+                ),
+              ],
             ),
-            _BottomControls(
-              micOn: _micOn,
-              videoOn: _videoOn,
-              screenSharing: _isScreenSharing,
-              handRaised: _handRaised,
-              onToggleMic: () => setState(() => _micOn = !_micOn),
-              onToggleVideo: () => setState(() => _videoOn = !_videoOn),
-              onToggleScreen: () =>
-                  setState(() => _isScreenSharing = !_isScreenSharing),
-              onToggleHand: () => setState(() => _handRaised = !_handRaised),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -301,29 +297,23 @@ class _TopBar extends StatelessWidget {
       height: 62,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0C1B3B),
-        border: Border(
-          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-        ),
+        color: AppColors.cardBackground.withValues(alpha: 0.95),
+        border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.circle, color: Color(0xFF10B981), size: 8),
+          const Icon(Icons.circle, color: AppColors.success, size: 8),
           const SizedBox(width: 6),
           const Text(
             'LIVE',
             style: TextStyle(
-              color: Color(0xFF10B981),
+              color: AppColors.success,
               fontWeight: FontWeight.w700,
               fontSize: 13,
             ),
           ),
           const SizedBox(width: 10),
-          Container(
-            width: 1,
-            height: 16,
-            color: Colors.white.withValues(alpha: 0.22),
-          ),
+          Container(width: 1, height: 16, color: AppColors.border),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -333,7 +323,7 @@ class _TopBar extends StatelessWidget {
                 Text(
                   groupName,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w800,
                     fontSize: 17,
                   ),
@@ -341,8 +331,8 @@ class _TopBar extends StatelessWidget {
                 ),
                 Text(
                   '$subject • $sessionTitle',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.75),
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
                     fontSize: 11,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -354,7 +344,7 @@ class _TopBar extends StatelessWidget {
           Text(
             '$joinedCount joined',
             style: const TextStyle(
-              color: Color(0xFF9FB3D1),
+              color: AppColors.accent,
               fontWeight: FontWeight.w700,
               fontSize: 12,
             ),
@@ -365,8 +355,8 @@ class _TopBar extends StatelessWidget {
             icon: const Icon(Icons.arrow_back, size: 14),
             label: const Text('Back to Group'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF9FB3D1),
-              side: BorderSide(color: Colors.white.withValues(alpha: 0.18)),
+              foregroundColor: AppColors.accent,
+              side: BorderSide(color: AppColors.border),
               textStyle: const TextStyle(fontSize: 12),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             ),
@@ -400,10 +390,8 @@ class _SessionTabs extends StatelessWidget {
       height: 56,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0B1734),
-        border: Border(
-          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-        ),
+        color: AppColors.cardBackground.withValues(alpha: 0.92),
+        border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
       child: Row(
         children: [
@@ -442,7 +430,7 @@ class _TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? const Color(0xFF10B981) : Colors.transparent,
+      color: selected ? AppColors.accent : Colors.transparent,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
@@ -451,12 +439,12 @@ class _TabButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
             children: [
-              Icon(icon, size: 15, color: const Color(0xFFE2E8F0)),
+              Icon(icon, size: 15, color: AppColors.textPrimary),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: const TextStyle(
-                  color: Color(0xFFE2E8F0),
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
                 ),
@@ -491,23 +479,24 @@ class _NotesPanel extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFF0B1938),
+              color: AppColors.cardBackground,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+              border: Border.all(color: AppColors.border),
             ),
             child: notes.isEmpty
                 ? const Center(
                     child: Text(
                       'No notes yet. Add the first note for this session.',
-                      style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
                     ),
                   )
                 : ListView.separated(
                     itemCount: notes.length,
-                    separatorBuilder: (_, _) => Divider(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      height: 20,
-                    ),
+                    separatorBuilder: (_, _) =>
+                        Divider(color: AppColors.border, height: 20),
                     itemBuilder: (context, index) {
                       final note = notes[index];
                       return Column(
@@ -518,13 +507,13 @@ class _NotesPanel extends StatelessWidget {
                               const Icon(
                                 Icons.note_alt_outlined,
                                 size: 14,
-                                color: Color(0xFF14B8A6),
+                                color: AppColors.accent,
                               ),
                               const SizedBox(width: 6),
                               Text(
                                 'by ${note.author}',
                                 style: const TextStyle(
-                                  color: Color(0xFFC7D2FE),
+                                  color: AppColors.textPrimary,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 12,
                                 ),
@@ -533,7 +522,7 @@ class _NotesPanel extends StatelessWidget {
                               Text(
                                 formatTime(note.updatedAt),
                                 style: const TextStyle(
-                                  color: Color(0xFF64748B),
+                                  color: AppColors.textSecondary,
                                   fontSize: 11,
                                 ),
                               ),
@@ -543,7 +532,7 @@ class _NotesPanel extends StatelessWidget {
                                 icon: const Icon(Icons.edit, size: 13),
                                 label: const Text('Edit'),
                                 style: TextButton.styleFrom(
-                                  foregroundColor: const Color(0xFF9CA3AF),
+                                  foregroundColor: AppColors.accent,
                                   textStyle: const TextStyle(fontSize: 12),
                                 ),
                               ),
@@ -553,7 +542,7 @@ class _NotesPanel extends StatelessWidget {
                           Text(
                             note.text,
                             style: const TextStyle(
-                              color: Color(0xFFCBD5E1),
+                              color: AppColors.textPrimary,
                               fontSize: 13,
                               height: 1.45,
                             ),
@@ -573,155 +562,13 @@ class _NotesPanel extends StatelessWidget {
             icon: const Icon(Icons.add, size: 16),
             label: const Text('Add Note'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF94A3B8),
-              side: BorderSide(color: Colors.white.withValues(alpha: 0.18)),
+              foregroundColor: AppColors.accent,
+              side: BorderSide(color: AppColors.border),
               textStyle: const TextStyle(fontSize: 13),
             ),
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ResourcesPanel extends StatelessWidget {
-  final String subject;
-  final ValueChanged<ResourceModel> onOpenResource;
-
-  const _ResourcesPanel({required this.subject, required this.onOpenResource});
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<ResourceLibraryProvider>(
-      builder: (context, provider, _) {
-        final state = provider.state;
-        final filtered = state.resources
-            .where((r) => r.subject.toLowerCase() == subject.toLowerCase())
-            .toList();
-        final resources = filtered.isEmpty ? state.resources : filtered;
-
-        if (state.isLoading) {
-          return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF14B8A6)),
-          );
-        }
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: ResourceLibraryProvider.filters.map((filter) {
-                final selected = state.selectedFilter == filter;
-                return ChoiceChip(
-                  label: Text(filter, style: const TextStyle(fontSize: 12)),
-                  selected: selected,
-                  onSelected: (_) => provider.setFilter(filter),
-                  selectedColor: const Color(0xFF10B981),
-                  backgroundColor: const Color(0xFF1E293B),
-                  labelStyle: TextStyle(
-                    color: selected ? Colors.white : const Color(0xFFCBD5E1),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0B1938),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.07),
-                  ),
-                ),
-                child: resources.isEmpty
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            'No resources available for this filter yet.',
-                            style: TextStyle(
-                              color: Color(0xFF94A3B8),
-                              fontSize: 13,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          OutlinedButton(
-                            onPressed: provider.loadResources,
-                            child: const Text('Reload Resources'),
-                          ),
-                        ],
-                      )
-                    : ListView.separated(
-                        itemCount: resources.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 8),
-                        itemBuilder: (context, index) {
-                          final resource = resources[index];
-                          return Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF132446),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 30,
-                                  height: 30,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1E293B),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(
-                                    Icons.menu_book_outlined,
-                                    size: 16,
-                                    color: Color(0xFF93C5FD),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        resource.title,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: Color(0xFFE2E8F0),
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        '${resource.subject} • ${resource.category}',
-                                        style: const TextStyle(
-                                          color: Color(0xFF94A3B8),
-                                          fontSize: 11,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: () => onOpenResource(resource),
-                                  child: const Text('Open'),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 }
@@ -752,10 +599,8 @@ class _ChatPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0B1734),
-        border: Border(
-          left: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-        ),
+        color: AppColors.cardBackground.withValues(alpha: 0.92),
+        border: Border(left: BorderSide(color: AppColors.border)),
       ),
       child: Column(
         children: [
@@ -763,22 +608,20 @@ class _ChatPanel extends StatelessWidget {
             height: 52,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-              ),
+              border: Border(bottom: BorderSide(color: AppColors.border)),
             ),
             child: Row(
               children: [
                 const Icon(
                   Icons.forum_outlined,
-                  color: Color(0xFFC7D2FE),
+                  color: AppColors.textPrimary,
                   size: 17,
                 ),
                 const SizedBox(width: 6),
                 const Text(
                   'Session Chat',
                   style: TextStyle(
-                    color: Color(0xFFE2E8F0),
+                    color: AppColors.textPrimary,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
@@ -787,7 +630,7 @@ class _ChatPanel extends StatelessWidget {
                 Text(
                   '${messages.length} messages',
                   style: const TextStyle(
-                    color: Color(0xFF64748B),
+                    color: AppColors.textSecondary,
                     fontSize: 11,
                   ),
                 ),
@@ -808,12 +651,12 @@ class _ChatPanel extends StatelessWidget {
                     CircleAvatar(
                       radius: 12,
                       backgroundColor: m.isMe
-                          ? const Color(0xFF0EA5E9)
-                          : const Color(0xFF334155),
+                          ? AppColors.accent
+                          : AppColors.primaryBrand,
                       child: Text(
                         _initials(m.sender),
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppColors.textOnDark,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                         ),
@@ -829,7 +672,7 @@ class _ChatPanel extends StatelessWidget {
                               Text(
                                 m.sender,
                                 style: const TextStyle(
-                                  color: Color(0xFF9FB3D1),
+                                  color: AppColors.accent,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -838,7 +681,7 @@ class _ChatPanel extends StatelessWidget {
                               Text(
                                 formatTime(m.sentAt),
                                 style: const TextStyle(
-                                  color: Color(0xFF64748B),
+                                  color: AppColors.textSecondary,
                                   fontSize: 10,
                                 ),
                               ),
@@ -848,13 +691,13 @@ class _ChatPanel extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(9),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1E293B),
+                              color: AppColors.backgroundLight,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
                               m.message,
                               style: const TextStyle(
-                                color: Color(0xFFE2E8F0),
+                                color: AppColors.textPrimary,
                                 fontSize: 12,
                                 height: 1.35,
                               ),
@@ -873,9 +716,9 @@ class _ChatPanel extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10),
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
+              color: AppColors.cardBackground,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              border: Border.all(color: AppColors.border),
             ),
             child: Row(
               children: [
@@ -884,13 +727,13 @@ class _ChatPanel extends StatelessWidget {
                     controller: controller,
                     onSubmitted: (_) => onSend(),
                     style: const TextStyle(
-                      color: Color(0xFFE2E8F0),
+                      color: AppColors.textPrimary,
                       fontSize: 12,
                     ),
                     decoration: const InputDecoration(
                       hintText: 'Send a message...',
                       hintStyle: TextStyle(
-                        color: Color(0xFF64748B),
+                        color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
                       border: InputBorder.none,
@@ -900,9 +743,13 @@ class _ChatPanel extends StatelessWidget {
                 ),
                 IconButton(
                   onPressed: onSend,
-                  icon: const Icon(Icons.send, size: 16, color: Colors.white),
+                  icon: const Icon(
+                    Icons.send,
+                    size: 16,
+                    color: AppColors.textOnDark,
+                  ),
                   style: IconButton.styleFrom(
-                    backgroundColor: const Color(0xFF14B8A6),
+                    backgroundColor: AppColors.accent,
                     minimumSize: const Size(30, 30),
                     padding: EdgeInsets.zero,
                   ),
@@ -942,10 +789,8 @@ class _BottomControls extends StatelessWidget {
     return Container(
       height: 58,
       decoration: BoxDecoration(
-        color: const Color(0xFF0F1B38),
-        border: Border(
-          top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-        ),
+        color: AppColors.cardBackground.withValues(alpha: 0.95),
+        border: Border(top: BorderSide(color: AppColors.border)),
       ),
       child: Center(
         child: Wrap(
@@ -997,7 +842,7 @@ class _BottomAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = active ? const Color(0xFF0EA5E9) : const Color(0xFF1E293B);
+    final bg = active ? AppColors.accent : AppColors.backgroundLight;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
@@ -1010,12 +855,12 @@ class _BottomAction extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: Colors.white),
+            Icon(icon, size: 14, color: AppColors.textPrimary),
             const SizedBox(width: 6),
             Text(
               text,
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.textPrimary,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
