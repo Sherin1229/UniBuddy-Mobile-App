@@ -1,14 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'core/theme/app_colors.dart';
-import 'features/study_groups/presentation/pages/study_group_list_screen.dart';
-import 'features/study_groups/presentation/state/study_group_provider.dart';
+import 'package:provider/provider.dart';
+import 'features/resource_sharing/presentation/state/resource_library_provider.dart';
+import 'features/onboarding/presentation/pages/onboarding_page.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Best-effort auth bootstrap for Firestore rules requiring request.auth.
+  if (FirebaseAuth.instance.currentUser == null) {
+    try {
+      await FirebaseAuth.instance.signInAnonymously();
+    } catch (_) {
+      // Keep app running; provider surfaces backend errors in UI.
+    }
+  }
+
   runApp(const MyApp());
 }
 
@@ -18,15 +28,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => StudyGroupProvider(),
+      create: (_) => ResourceLibraryProvider(),
       child: MaterialApp(
-        title: 'UniBuddy - Study Groups',
+        title: 'UniBuddy',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF0F766E),
+          ), 
           useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primaryBrand),
         ),
-        home: const StudyGroupListScreen(),
+        home: const OnboardingPage(),
       ),
     );
   }

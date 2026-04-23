@@ -7,23 +7,30 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:685122223165:android:48ff74bf66a37720353e54",
+        "mobilesdk_app_id": "1:685122223165:android:7399bea0fc73c249353e54",
         "android_client_info": {
-          "package_name": "com.example.study_group_creation"
+          "package_name": "com.example.unibuddy"
         }
       },
-      "oauth_client": ],
+      "oauth_client": [
+        {
+          "client_id": "685122223165-qgah860ebnb3a70ta864uiacu4v09vg9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyDarr2-Kf_XKunr0mooUGZf3Y5FPtQQlYU"
+          "current_key": "AIzaSyC43QLD3VwrYmyBRXe2k-RYkEnaeBs6_34"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": ]
-        },
-        "ads_service": {
-          "status": 2
+          "other_platform_oauth_client": [
+            {
+              "client_id": "685122223165-qgah860ebnb3a70ta864uiacu4v09vg9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
