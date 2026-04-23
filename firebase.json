@@ -1,0 +1,32 @@
+{
+	"flutter": {
+		"platforms": {
+			"android": {
+				"default": {
+					"projectId": "unibuddy-785ab",
+					"appId": "1:685122223165:android:7399bea0fc73c249353e54",
+					"fileOutput": "android/app/google-services.json"
+				}
+			},
+			"dart": {
+				"lib/firebase_options.dart": {
+					"projectId": "unibuddy-785ab",
+					"configurations": {
+						"android": "1:685122223165:android:7399bea0fc73c249353e54",
+						"ios": "1:685122223165:ios:69e9812585bd03cd353e54",
+						"macos": "1:685122223165:ios:69e9812585bd03cd353e54",
+						"web": "1:685122223165:web:48ff74bf66a37720353e54",
+						"windows": "1:685122223165:web:74fa5ea8e90ffecf353e54"
+					}
+				}
+			}
+		}
+	},
+	"firestore": {
+		"rules": "firestore.rules",
+		"indexes": "firestore.indexes.json"
+	},
+	"storage": {
+		"rules": "storage.rules"
+	}
+}
