@@ -1,0 +1,99 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Collection: study_groups
+    // Stores all study group data
+    match /study_groups/{documentId} {
+      // Allow anyone to read study groups (public data)
+      allow read: if true;
+      
+      // Allow authenticated users to create study groups
+      allow create: if isAuthenticated() && 
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.size() > 0;
+      
+      // Allow only the owner to update/delete their study group
+      allow update: if isOwner(resource.data.createdBy) &&
+        request.resource.data.createdBy == resource.data.createdBy;
+        
+      allow delete: if isOwner(resource.data.createdBy);
+      
+      // Subcollection: members
+      // Stores study group members
+      match /members/{memberId} {
+        allow read: if true;
+        allow create: if isAuthenticated();
+        allow update, delete: if isAuthenticated() && 
+          (isOwner(get(/databases/$(database)/documents/study_groups/$(documentId)).data.createdBy) ||
+           request.auth.uid == memberId);
+      }
+      
+      // Subcollection: sessions
+      // Stores study sessions within a study group
+      match /sessions/{sessionId} {
+        allow read: if true;
+        allow create: if isAuthenticated();
+        allow update, delete: if isAuthenticated() && 
+          isOwner(get(/databases/$(database)/documents/study_groups/$(documentId)).data.createdBy);
+      }
+      
+      // Subcollection: resources
+      // Stores study materials/resources
+      match /resources/{resourceId} {
+        allow read: if true;
+        allow create: if isAuthenticated();
+        allow update, delete: if isAuthenticated() && 
+          request.auth.uid == resource.data.uploadedBy;
+      }
+    }
+    
+    // Collection: users
+    // Stores user profile data
+    match /users/{userId} {
+      // Users can read their own profile
+      allow read: if isOwner(userId);
+      
+      // Authenticated users can create their profile once
+      allow create: if isAuthenticated() && 
+        request.auth.uid == userId &&
+        request.resource.data.uid == userId;
+      
+      // Users can update their own profile
+      allow update: if isOwner(userId);
+      
+      // Prevent user deletion for data integrity
+      allow delete: if false;
+    }
+    
+    // Collection: notifications
+    // Stores user notifications
+    match /notifications/{notificationId} {
+      // Users can read their own notifications
+      allow read: if isOwner(resource.data.recipientId);
+      
+      // Server/backend creates notifications
+      allow create: if isAuthenticated();
+      
+      // Users can update (mark as read) their own notifications
+      allow update: if isOwner(resource.data.recipientId);
+      
+      // Users can delete their own notifications
+      allow delete: if isOwner(resource.data.recipientId);
+    }
+    
+    // Catch-all: deny everything not explicitly allowed
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

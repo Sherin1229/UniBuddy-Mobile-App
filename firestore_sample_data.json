@@ -1,0 +1,354 @@
+{
+  "study_groups": {
+    "sg_001_flutter_basics": {
+      "id": "sg_001_flutter_basics",
+      "name": "Flutter Basics Study Group",
+      "description": "Learn Flutter fundamentals together",
+      "subject": "Flutter",
+      "level": "Beginner",
+      "maxMembers": 20,
+      "currentMembers": 5,
+      "createdBy": "user_001_alice",
+      "createdAt": "2026-04-01T10:00:00Z",
+      "imageUrl": "https://via.placeholder.com/400x300?text=Flutter+Basics",
+      "tags": ["flutter", "mobile", "beginner"],
+      "members": {
+        "user_001_alice": {
+          "id": "user_001_alice",
+          "name": "Alice Johnson",
+          "email": "alice@university.edu",
+          "role": "admin",
+          "joinedAt": "2026-04-01T10:00:00Z"
+        },
+        "user_002_bob": {
+          "id": "user_002_bob",
+          "name": "Bob Smith",
+          "email": "bob@university.edu",
+          "role": "member",
+          "joinedAt": "2026-04-02T14:30:00Z"
+        },
+        "user_003_carol": {
+          "id": "user_003_carol",
+          "name": "Carol Williams",
+          "email": "carol@university.edu",
+          "role": "member",
+          "joinedAt": "2026-04-03T09:15:00Z"
+        },
+        "user_004_david": {
+          "id": "user_004_david",
+          "name": "David Brown",
+          "email": "david@university.edu",
+          "role": "member",
+          "joinedAt": "2026-04-04T16:45:00Z"
+        },
+        "user_005_emma": {
+          "id": "user_005_emma",
+          "name": "Emma Davis",
+          "email": "emma@university.edu",
+          "role": "member",
+          "joinedAt": "2026-04-05T11:20:00Z"
+        }
+      },
+      "sessions": {
+        "session_001": {
+          "id": "session_001",
+          "title": "Introduction to Flutter Widgets",
+          "description": "Learn about StatelessWidget and StatefulWidget",
+          "scheduledAt": "2026-04-10T19:00:00Z",
+          "duration": 120,
+          "attendees": 4,
+          "maxAttendees": 20,
+          "status": "scheduled",
+          "createdBy": "user_001_alice"
+        },
+        "session_002": {
+          "id": "session_002",
+          "title": "State Management with Provider",
+          "description": "Understanding Provider package for state management",
+          "scheduledAt": "2026-04-15T19:00:00Z",
+          "duration": 120,
+          "attendees": 3,
+          "maxAttendees": 20,
+          "status": "scheduled",
+          "createdBy": "user_001_alice"
+        }
+      },
+      "resources": {
+        "res_001": {
+          "id": "res_001",
+          "title": "Flutter Official Documentation",
+          "description": "Link to Flutter's official docs",
+          "type": "link",
+          "url": "https://flutter.dev/docs",
+          "uploadedBy": "user_001_alice",
+          "uploadedAt": "2026-04-01T10:30:00Z"
+        },
+        "res_002": {
+          "id": "res_002",
+          "title": "Flutter Widget Catalog",
+          "description": "Comprehensive guide to Flutter widgets",
+          "type": "link",
+          "url": "https://flutter.dev/docs/development/ui/widgets",
+          "uploadedBy": "user_002_bob",
+          "uploadedAt": "2026-04-02T15:00:00Z"
+        }
+      }
+    },
+    "sg_002_web_development": {
+      "id": "sg_002_web_development",
+      "name": "Web Development Study Group",
+      "description": "Master HTML, CSS, and JavaScript",
+      "subject": "Web Development",
+      "level": "Intermediate",
+      "maxMembers": 15,
+      "currentMembers": 3,
+      "createdBy": "user_003_carol",
+      "createdAt": "2026-04-02T14:00:00Z",
+      "imageUrl": "https://via.placeholder.com/400x300?text=Web+Development",
+      "tags": ["web", "html", "css", "javascript", "intermediate"],
+      "members": {
+        "user_003_carol": {
+          "id": "user_003_carol",
+          "name": "Carol Williams",
+          "email": "carol@university.edu",
+          "role": "admin",
+          "joinedAt": "2026-04-02T14:00:00Z"
+        },
+        "user_006_frank": {
+          "id": "user_006_frank",
+          "name": "Frank Miller",
+          "email": "frank@university.edu",
+          "role": "member",
+          "joinedAt": "2026-04-03T10:30:00Z"
+        },
+        "user_007_grace": {
+          "id": "user_007_grace",
+          "name": "Grace Lee",
+          "email": "grace@university.edu",
+          "role": "member",
+          "joinedAt": "2026-04-05T13:45:00Z"
+        }
+      },
+      "sessions": {
+        "session_003": {
+          "id": "session_003",
+          "title": "CSS Flexbox Mastery",
+          "description": "Learn responsive layouts with Flexbox",
+          "scheduledAt": "2026-04-12T18:00:00Z",
+          "duration": 90,
+          "attendees": 2,
+          "maxAttendees": 15,
+          "status": "scheduled",
+          "createdBy": "user_003_carol"
+        }
+      },
+      "resources": {}
+    },
+    "sg_003_python_programming": {
+      "id": "sg_003_python_programming",
+      "name": "Python Programming Study Group",
+      "description": "Learn Python from basics to advanced",
+      "subject": "Python",
+      "level": "Beginner",
+      "maxMembers": 25,
+      "currentMembers": 2,
+      "createdBy": "user_004_david",
+      "createdAt": "2026-04-03T11:00:00Z",
+      "imageUrl": "https://via.placeholder.com/400x300?text=Python+Programming",
+      "tags": ["python", "programming", "beginner"],
+      "members": {
+        "user_004_david": {
+          "id": "user_004_david",
+          "name": "David Brown",
+          "email": "david@university.edu",
+          "role": "admin",
+          "joinedAt": "2026-04-03T11:00:00Z"
+        },
+        "user_008_henry": {
+          "id": "user_008_henry",
+          "name": "Henry Johnson",
+          "email": "henry@university.edu",
+          "role": "member",
+          "joinedAt": "2026-04-04T15:20:00Z"
+        }
+      },
+      "sessions": {},
+      "resources": {}
+    }
+  },
+  "users": {
+    "user_001_alice": {
+      "uid": "user_001_alice",
+      "name": "Alice Johnson",
+      "email": "alice@university.edu",
+      "photoUrl": "https://via.placeholder.com/150",
+      "university": "Tech University",
+      "major": "Computer Science",
+      "bio": "Passionate about Flutter development",
+      "createdAt": "2026-03-15T08:00:00Z",
+      "updatedAt": "2026-04-05T10:30:00Z",
+      "studyGroups": ["sg_001_flutter_basics"],
+      "preferences": {
+        "notifications": true,
+        "emailNotifications": false,
+        "publicProfile": true
+      }
+    },
+    "user_002_bob": {
+      "uid": "user_002_bob",
+      "name": "Bob Smith",
+      "email": "bob@university.edu",
+      "photoUrl": "https://via.placeholder.com/150",
+      "university": "Tech University",
+      "major": "Software Engineering",
+      "bio": "Learning Flutter with the community",
+      "createdAt": "2026-03-20T09:30:00Z",
+      "updatedAt": "2026-04-03T14:15:00Z",
+      "studyGroups": ["sg_001_flutter_basics"],
+      "preferences": {
+        "notifications": true,
+        "emailNotifications": true,
+        "publicProfile": true
+      }
+    },
+    "user_003_carol": {
+      "uid": "user_003_carol",
+      "name": "Carol Williams",
+      "email": "carol@university.edu",
+      "photoUrl": "https://via.placeholder.com/150",
+      "university": "Tech University",
+      "major": "Information Systems",
+      "bio": "Web development enthusiast",
+      "createdAt": "2026-03-18T10:00:00Z",
+      "updatedAt": "2026-04-02T16:45:00Z",
+      "studyGroups": ["sg_001_flutter_basics", "sg_002_web_development"],
+      "preferences": {
+        "notifications": true,
+        "emailNotifications": false,
+        "publicProfile": true
+      }
+    },
+    "user_004_david": {
+      "uid": "user_004_david",
+      "name": "David Brown",
+      "email": "david@university.edu",
+      "photoUrl": "https://via.placeholder.com/150",
+      "university": "Tech University",
+      "major": "Computer Science",
+      "bio": "Python developer and mentor",
+      "createdAt": "2026-03-22T11:15:00Z",
+      "updatedAt": "2026-04-04T12:30:00Z",
+      "studyGroups": ["sg_001_flutter_basics", "sg_003_python_programming"],
+      "preferences": {
+        "notifications": true,
+        "emailNotifications": true,
+        "publicProfile": true
+      }
+    },
+    "user_005_emma": {
+      "uid": "user_005_emma",
+      "name": "Emma Davis",
+      "email": "emma@university.edu",
+      "photoUrl": "https://via.placeholder.com/150",
+      "university": "Tech University",
+      "major": "Data Science",
+      "bio": "Data science and Python enthusiast",
+      "createdAt": "2026-03-25T13:45:00Z",
+      "updatedAt": "2026-04-05T09:20:00Z",
+      "studyGroups": ["sg_001_flutter_basics"],
+      "preferences": {
+        "notifications": false,
+        "emailNotifications": false,
+        "publicProfile": false
+      }
+    },
+    "user_006_frank": {
+      "uid": "user_006_frank",
+      "name": "Frank Miller",
+      "email": "frank@university.edu",
+      "photoUrl": "https://via.placeholder.com/150",
+      "university": "Tech University",
+      "major": "Web Technology",
+      "bio": "Full-stack web developer",
+      "createdAt": "2026-03-28T14:00:00Z",
+      "updatedAt": "2026-04-03T11:00:00Z",
+      "studyGroups": ["sg_002_web_development"],
+      "preferences": {
+        "notifications": true,
+        "emailNotifications": true,
+        "publicProfile": true
+      }
+    },
+    "user_007_grace": {
+      "uid": "user_007_grace",
+      "name": "Grace Lee",
+      "email": "grace@university.edu",
+      "photoUrl": "https://via.placeholder.com/150",
+      "university": "Tech University",
+      "major": "Computer Science",
+      "bio": "UI/UX and frontend specialist",
+      "createdAt": "2026-03-30T15:30:00Z",
+      "updatedAt": "2026-04-05T14:15:00Z",
+      "studyGroups": ["sg_002_web_development"],
+      "preferences": {
+        "notifications": true,
+        "emailNotifications": true,
+        "publicProfile": true
+      }
+    },
+    "user_008_henry": {
+      "uid": "user_008_henry",
+      "name": "Henry Johnson",
+      "email": "henry@university.edu",
+      "photoUrl": "https://via.placeholder.com/150",
+      "university": "Tech University",
+      "major": "Computer Science",
+      "bio": "Learning Python programming",
+      "createdAt": "2026-04-01T16:45:00Z",
+      "updatedAt": "2026-04-04T17:00:00Z",
+      "studyGroups": ["sg_003_python_programming"],
+      "preferences": {
+        "notifications": true,
+        "emailNotifications": false,
+        "publicProfile": true
+      }
+    }
+  },
+  "notifications": {
+    "notif_001": {
+      "id": "notif_001",
+      "recipientId": "user_002_bob",
+      "senderId": "user_001_alice",
+      "type": "session_reminder",
+      "title": "Session Starting Soon",
+      "message": "Introduction to Flutter Widgets starts in 30 minutes",
+      "studyGroupId": "sg_001_flutter_basics",
+      "sessionId": "session_001",
+      "read": false,
+      "createdAt": "2026-04-10T18:30:00Z"
+    },
+    "notif_002": {
+      "id": "notif_002",
+      "recipientId": "user_003_carol",
+      "senderId": "user_002_bob",
+      "type": "member_joined",
+      "title": "New Member Joined",
+      "message": "David just joined Flutter Basics Study Group",
+      "studyGroupId": "sg_001_flutter_basics",
+      "read": false,
+      "createdAt": "2026-04-04T16:50:00Z"
+    },
+    "notif_003": {
+      "id": "notif_003",
+      "recipientId": "user_001_alice",
+      "senderId": "user_005_emma",
+      "type": "resource_shared",
+      "title": "New Resource Shared",
+      "message": "Emma shared a Flutter tutorial resource",
+      "studyGroupId": "sg_001_flutter_basics",
+      "resourceId": "res_002",
+      "read": true,
+      "createdAt": "2026-04-02T15:30:00Z"
+    }
+  }
+}
