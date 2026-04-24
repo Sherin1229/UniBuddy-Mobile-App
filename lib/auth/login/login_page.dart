@@ -16,6 +16,7 @@ class _LoginPageState extends State<LoginPage> {
   static const Duration _requestTimeout = Duration(seconds: 15);
 
   final _formKey = GlobalKey<FormState>();
+  AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
@@ -65,6 +66,9 @@ class _LoginPageState extends State<LoginPage> {
     FocusScope.of(context).unfocus();
 
     if (!(_formKey.currentState?.validate() ?? false)) {
+      setState(() {
+        _autoValidateMode = AutovalidateMode.onUserInteraction;
+      });
       return;
     }
 
@@ -241,8 +245,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             child: Form(
                               key: _formKey,
-                              autovalidateMode:
-                                  AutovalidateMode.onUserInteraction,
+                              autovalidateMode: _autoValidateMode,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [

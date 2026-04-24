@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'features/resource_sharing/presentation/pages/resource_library_page.dart';
 import 'features/resource_sharing/presentation/pages/resource_form_page.dart';
 import 'features/assignment_help/presentation/pages/assignment_help_page.dart';
-import 'features/study_group/presentation/pages/study_group_page.dart';
+import 'features/study_groups/presentation/pages/study_group_list_screen.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
 import 'features/assignment_help/presentation/pages/help_request_form_page.dart';
 
@@ -16,12 +16,34 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = const [
-    ResourceLibraryPage(),
-    AssignmentHelpPage(),
-    StudyGroupPage(),
-    SettingsPage(),
-  ];
+  final GlobalKey<NavigatorState> _studyGroupNavKey = GlobalKey<NavigatorState>();
+  late final List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      const ResourceLibraryPage(),
+      const AssignmentHelpPage(),
+      PopScope(
+        canPop: false,
+        onPopInvoked: (didPop) {
+          if (didPop) return;
+          final nav = _studyGroupNavKey.currentState;
+          if (nav != null && nav.canPop()) {
+            nav.pop();
+          }
+        },
+        child: Navigator(
+          key: _studyGroupNavKey,
+          onGenerateRoute: (settings) => MaterialPageRoute(
+            builder: (_) => const StudyGroupListScreen(),
+          ),
+        ),
+      ),
+      const SettingsPage(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +80,10 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       extendBody: true,
-      body: _pages[_currentIndex],
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _pages,
+      ),
       floatingActionButton: fab,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: NavigationBar(

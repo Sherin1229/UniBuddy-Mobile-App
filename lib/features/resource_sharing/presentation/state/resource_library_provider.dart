@@ -5,15 +5,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../data/models/resource_model.dart';
-import '../../data/services/cloudinary_upload_service.dart';
 import '../../data/services/resource_firestore_service.dart';
+import '../../data/services/cloudinary_upload_service.dart';
 import 'resource_library_state.dart';
 
 class ResourceLibraryProvider extends ChangeNotifier {
   static const Duration _requestTimeout = Duration(seconds: 30);
   final ResourceFirestoreService _service = ResourceFirestoreService();
-  final CloudinaryUploadService _cloudinaryUploadService =
-      CloudinaryUploadService();
   ResourceLibraryState _state = const ResourceLibraryState();
   List<ResourceModel> _allResources = const [];
   StreamSubscription<List<ResourceModel>>? _resourceSubscription;
@@ -115,21 +113,6 @@ class ResourceLibraryProvider extends ChangeNotifier {
       return message;
     }
 
-    String? resolvedExternalUrl;
-
-    try {
-      resolvedExternalUrl = await _cloudinaryUploadService.uploadFile(
-        fileBytes: fileBytes,
-        fileName: fileName,
-        folder: 'unibuddy/resources',
-      );
-    } on CloudinaryUploadException catch (e) {
-      final message = e.message;
-      _state = _state.copyWith(isSubmitting: false, error: message);
-      notifyListeners();
-      return message;
-    }
-
     final resource = ResourceModel(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       title: title,
@@ -145,7 +128,7 @@ class ResourceLibraryProvider extends ChangeNotifier {
       fileType: fileType,
       fileSizeKb: fileSizeKb,
       fileName: fileName,
-      fileUrl: resolvedExternalUrl,
+      fileUrl: null,
     );
 
     try {
@@ -154,7 +137,6 @@ class ResourceLibraryProvider extends ChangeNotifier {
         resource,
         fileBytes: fileBytes,
         fileName: fileName,
-        externalFileUrl: resolvedExternalUrl,
       );
       _state = _state.copyWith(isSubmitting: false, clearError: true);
       notifyListeners();
@@ -229,6 +211,10 @@ class ResourceLibraryProvider extends ChangeNotifier {
   }
 
   String _mapBackendError(Object error, {required String action}) {
+    if (error is CloudinaryUploadException) {
+      return error.message;
+    }
+
     if (error is TimeoutException) {
       return 'Request timed out while trying to $action the resource. Check your connection and try again.';
     }

@@ -126,16 +126,27 @@ class _ResourceDetailsPageState extends State<ResourceDetailsPage> {
 
     setState(() => _isDownloading = true);
     try {
-      final fileUrl = await _service.resolveDownloadUrl(resource);
-      final uri = _buildDownloadUri(fileUrl);
-      if (uri == null) {
+      String fileUrl = resource.fileUrl ?? '';
+      if (fileUrl.isEmpty) {
+        fileUrl = await _service.resolveDownloadUrl(resource);
+      }
+      
+      final candidates = _buildDownloadUris(fileUrl);
+      if (candidates.isEmpty) {
         throw const FormatException('Invalid URL');
       }
 
-      final launched = await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
+      var launched = false;
+      for (final uri in candidates) {
+        launched = await launchUrl(
+          uri,
+          mode: LaunchMode.platformDefault,
+          webOnlyWindowName: '_blank',
+        );
+        if (launched) {
+          break;
+        }
+      }
 
       if (!launched) {
         throw Exception('Could not launch URL');
@@ -167,35 +178,58 @@ class _ResourceDetailsPageState extends State<ResourceDetailsPage> {
     }
   }
 
-  Uri? _buildDownloadUri(String rawUrl) {
+  List<Uri> _buildDownloadUris(String rawUrl) {
     final parsed = Uri.tryParse(rawUrl.trim());
     if (parsed == null) {
-      return null;
+      return const [];
     }
+
+    final uris = <Uri>[];
 
     final cloudinaryOriginal = _toOriginalCloudinaryUrl(
       parsed,
       fileName: resource.fileName,
     );
     if (cloudinaryOriginal != null) {
-      return cloudinaryOriginal;
+      uris.add(parsed);
+      uris.add(cloudinaryOriginal);
+      return _deduplicateUris(uris);
     }
 
     final host = parsed.host.toLowerCase();
     if (host.contains('drive.google.com')) {
       final id = _googleDriveFileId(parsed);
       if (id != null) {
-        return Uri.parse('https://drive.google.com/uc?export=download&id=$id');
+        uris.add(
+          Uri.parse('https://drive.google.com/uc?export=download&id=$id'),
+        );
+        uris.add(parsed);
+        return _deduplicateUris(uris);
       }
     }
 
     if (host.contains('dropbox.com')) {
-      return parsed.replace(
-        queryParameters: {...parsed.queryParameters, 'dl': '1'},
+      uris.add(
+        parsed.replace(queryParameters: {...parsed.queryParameters, 'dl': '1'}),
       );
+      uris.add(parsed);
+      return _deduplicateUris(uris);
     }
 
-    return parsed;
+    uris.add(parsed);
+    return _deduplicateUris(uris);
+  }
+
+  List<Uri> _deduplicateUris(List<Uri> input) {
+    final seen = <String>{};
+    final result = <Uri>[];
+    for (final uri in input) {
+      final key = uri.toString();
+      if (seen.add(key)) {
+        result.add(uri);
+      }
+    }
+    return result;
   }
 
   Uri? _toOriginalCloudinaryUrl(Uri uri, {String? fileName}) {

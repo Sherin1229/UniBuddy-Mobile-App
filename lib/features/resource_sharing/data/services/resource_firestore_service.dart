@@ -3,6 +3,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:typed_data';
 import '../models/resource_model.dart';
 
+import 'cloudinary_upload_service.dart';
+
 enum ResourceReaction { like, dislike }
 
 class ResourceReactionSummary {
@@ -21,6 +23,11 @@ class ResourceFirestoreService {
   CollectionReference get _col =>
       FirebaseFirestore.instance.collection('resources');
   FirebaseStorage get _storage => FirebaseStorage.instance;
+  final _cloudinary = CloudinaryUploadService();
+
+  static const String _cloudName = String.fromEnvironment('CLOUDINARY_CLOUD_NAME');
+  static const String _uploadPreset = String.fromEnvironment('CLOUDINARY_UPLOAD_PRESET');
+  bool get _useCloudinary => _cloudName.isNotEmpty && _uploadPreset.isNotEmpty;
 
   static String _reactionToString(ResourceReaction reaction) {
     switch (reaction) {
@@ -107,20 +114,32 @@ class ResourceFirestoreService {
       );
     }
 
-    final safeName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
-    final storagePath = 'resources/${resource.id}/$safeName';
-    final ref = _storage.ref(storagePath);
-
-    await ref.putData(fileBytes);
     String? downloadUrl;
-    try {
-      downloadUrl = await _getDownloadUrlWithRetry(ref);
-    } on FirebaseException catch (e) {
-      if (e.code != 'object-not-found') {
-        rethrow;
+    String? storagePath;
+
+    if (_useCloudinary) {
+      downloadUrl = await _cloudinary.uploadFile(
+        fileBytes: fileBytes,
+        fileName: fileName,
+      );
+    } else {
+      final safeName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+      storagePath = 'resources/${resource.id}/$safeName';
+      final ref = _storage.ref(storagePath);
+
+      final metadata = SettableMetadata(
+        contentDisposition: 'attachment; filename="$fileName"',
+      );
+      await ref.putData(fileBytes, metadata);
+      try {
+        downloadUrl = await _getDownloadUrlWithRetry(ref);
+      } on FirebaseException catch (e) {
+        if (e.code != 'object-not-found') {
+          rethrow;
+        }
+        // Keep upload successful even if URL is not immediately resolvable.
+        downloadUrl = null;
       }
-      // Keep upload successful even if URL is not immediately resolvable.
-      downloadUrl = null;
     }
 
     await _col

@@ -17,6 +17,7 @@ class _RegisterPageState extends State<RegisterPage> {
   static const Duration _requestTimeout = Duration(seconds: 15);
 
   final _formKey = GlobalKey<FormState>();
+  AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -97,6 +98,9 @@ class _RegisterPageState extends State<RegisterPage> {
     FocusScope.of(context).unfocus();
 
     if (!(_formKey.currentState?.validate() ?? false)) {
+      setState(() {
+        _autoValidateMode = AutovalidateMode.onUserInteraction;
+      });
       return;
     }
 
@@ -318,8 +322,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                                 Form(
                                   key: _formKey,
-                                  autovalidateMode:
-                                      AutovalidateMode.onUserInteraction,
+                                  autovalidateMode: _autoValidateMode,
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
