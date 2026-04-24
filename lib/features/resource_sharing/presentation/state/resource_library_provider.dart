@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../data/models/resource_model.dart';
 import '../../data/services/resource_firestore_service.dart';
+import '../../data/services/cloudinary_upload_service.dart';
 import 'resource_library_state.dart';
 
 class ResourceLibraryProvider extends ChangeNotifier {
@@ -210,6 +211,10 @@ class ResourceLibraryProvider extends ChangeNotifier {
   }
 
   String _mapBackendError(Object error, {required String action}) {
+    if (error is CloudinaryUploadException) {
+      return error.message;
+    }
+
     if (error is TimeoutException) {
       return 'Request timed out while trying to $action the resource. Check your connection and try again.';
     }

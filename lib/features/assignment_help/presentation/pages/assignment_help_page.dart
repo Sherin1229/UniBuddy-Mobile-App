@@ -45,10 +45,10 @@ class _AssignmentHelpPageState extends State<AssignmentHelpPage> {
         list = list.where(isCurrentUser).toList();
         break;
       case 2: // Open
-        list = list.where((r) => r.status == HelpRequestStatus.open && isCurrentUser(r)).toList();
+        list = list.where((r) => r.status == HelpRequestStatus.open).toList();
         break;
       case 3: // Solved
-        list = list.where((r) => r.status == HelpRequestStatus.solved && isCurrentUser(r)).toList();
+        list = list.where((r) => r.status == HelpRequestStatus.solved).toList();
         break;
     }
 
