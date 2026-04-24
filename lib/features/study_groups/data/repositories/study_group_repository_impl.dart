@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/study_group.dart';
 import '../models/group_member.dart';
 import '../models/study_session.dart';
@@ -7,6 +10,7 @@ import 'study_group_repository.dart';
 
 class StudyGroupRepositoryImpl implements StudyGroupRepository {
   static const String baseUrl = 'http://localhost:8000/api/v1';
+  static const String _groupsCollection = 'study_groups';
 
   // Demo user (until we add auth)
   static const int _currentUserId = 1;
@@ -28,6 +32,55 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
   int _memberIdCounter = 1000;
   int _sessionIdCounter = 2000;
   int _requestIdCounter = 3000;
+  bool _mockFirestoreSeeded = false;
+
+  Future<void> _saveGroupToFirestore({
+    required StudyGroup group,
+    required List<StudySession> sessions,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    final groupRef = FirebaseFirestore.instance
+        .collection(_groupsCollection)
+        .doc(group.id.toString());
+
+    await groupRef.set({
+      'id': group.id,
+      'created_by': group.createdBy,
+      'name': group.name,
+      'subject': group.subject,
+      'description': group.description,
+      'max_members': group.maxMembers,
+      'current_members': group.currentMembers,
+      'created_at': Timestamp.fromDate(group.createdAt),
+      'cover_image_url': group.coverImageUrl,
+      'creator_name': group.creatorName,
+      'creator_avatar_url': group.creatorAvatarUrl,
+      'upcoming_sessions_count': group.upcomingSessionsCount,
+      'next_session_at': group.nextSessionAt != null
+          ? Timestamp.fromDate(group.nextSessionAt!)
+          : null,
+      'is_private': group.isPrivate,
+      'is_joined': group.isJoined,
+      'is_creator': group.isCreator,
+      'firebase_uid': user?.uid,
+      'updated_at': FieldValue.serverTimestamp(),
+    });
+
+    final WriteBatch batch = FirebaseFirestore.instance.batch();
+    final sessionsCollection = groupRef.collection('sessions');
+    for (final session in sessions) {
+      final sessionRef = sessionsCollection.doc(session.id.toString());
+      batch.set(sessionRef, {
+        'id': session.id,
+        'group_id': session.groupId,
+        'title': session.title,
+        'scheduled_at': Timestamp.fromDate(session.scheduledAt),
+        'duration_minutes': session.durationMinutes,
+        'participant_count': session.participantCount,
+      });
+    }
+    await batch.commit();
+  }
 
   void _ensureSeeded() {
     if (_seeded) return;
@@ -439,6 +492,28 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
     );
   }
 
+  Future<void> _seedFirstMockGroupsToFirestore({int limit = 3}) async {
+    if (_mockFirestoreSeeded) return;
+
+    // Seed only the original mock groups from Study Group page data.
+    final groupsToSeed = _mockGroups
+        .where((g) => g.id >= 101 && g.id <= 103)
+        .take(limit);
+
+    for (final group in groupsToSeed) {
+      try {
+        await _saveGroupToFirestore(
+          group: group,
+          sessions: _sessionsByGroup[group.id] ?? const <StudySession>[],
+        );
+      } catch (_) {
+        // Continue seeding remaining groups even if one write fails.
+      }
+    }
+
+    _mockFirestoreSeeded = true;
+  }
+
   @override
   Future<List<StudyGroup>> getAllGroups() async {
     try {
@@ -449,6 +524,10 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
       for (final g in _mockGroups) {
         _recomputeGroupFlags(g.id);
       }
+
+      // One-time sync: push first 3 seeded mock groups to Firestore.
+      await _seedFirstMockGroupsToFirestore(limit: 3);
+
       return List<StudyGroup>.unmodifiable(_mockGroups);
     } catch (e) {
       throw Exception('Failed to fetch groups: $e');
@@ -553,6 +632,9 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
         ),
       ];
       _sessionsByGroup[groupId] = createdSessions;
+
+      // Persist created group to Firebase first so creation only succeeds when synced.
+      await _saveGroupToFirestore(group: newGroup, sessions: createdSessions);
 
       _mockGroups = <StudyGroup>[newGroup, ..._mockGroups];
       return newGroup;
