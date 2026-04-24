@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'features/resource_sharing/presentation/state/resource_library_provider.dart';
+import 'features/study_groups/presentation/state/study_group_provider.dart';
 import 'features/onboarding/presentation/pages/onboarding_page.dart';
 import 'firebase_options.dart';
 
@@ -27,8 +28,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ResourceLibraryProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ResourceLibraryProvider()),
+        ChangeNotifierProvider(create: (_) => StudyGroupProvider()),
+      ],
       child: MaterialApp(
         title: 'UniBuddy',
         debugShowCheckedModeBanner: false,
