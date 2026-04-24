@@ -126,7 +126,11 @@ class _ResourceDetailsPageState extends State<ResourceDetailsPage> {
 
     setState(() => _isDownloading = true);
     try {
-      final fileUrl = await _service.resolveDownloadUrl(resource);
+      String fileUrl = resource.fileUrl ?? '';
+      if (fileUrl.isEmpty) {
+        fileUrl = await _service.resolveDownloadUrl(resource);
+      }
+      
       final candidates = _buildDownloadUris(fileUrl);
       if (candidates.isEmpty) {
         throw const FormatException('Invalid URL');
@@ -134,7 +138,11 @@ class _ResourceDetailsPageState extends State<ResourceDetailsPage> {
 
       var launched = false;
       for (final uri in candidates) {
-        launched = await launchUrl(uri, mode: LaunchMode.platformDefault);
+        launched = await launchUrl(
+          uri,
+          mode: LaunchMode.platformDefault,
+          webOnlyWindowName: '_blank',
+        );
         if (launched) {
           break;
         }

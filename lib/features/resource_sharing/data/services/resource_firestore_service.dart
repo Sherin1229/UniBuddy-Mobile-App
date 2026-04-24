@@ -111,7 +111,10 @@ class ResourceFirestoreService {
     final storagePath = 'resources/${resource.id}/$safeName';
     final ref = _storage.ref(storagePath);
 
-    await ref.putData(fileBytes);
+    final metadata = SettableMetadata(
+      contentDisposition: 'attachment; filename="$fileName"',
+    );
+    await ref.putData(fileBytes, metadata);
     String? downloadUrl;
     try {
       downloadUrl = await _getDownloadUrlWithRetry(ref);
