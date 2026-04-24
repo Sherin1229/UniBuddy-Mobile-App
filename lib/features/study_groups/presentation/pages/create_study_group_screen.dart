@@ -510,170 +510,147 @@ class _CreateStudyGroupScreenState extends State<CreateStudyGroupScreen> {
                                       ),
                                       const SizedBox(height: 14),
 
-                                      Row(
+                                      Column(
                                         children: [
-                                          Expanded(
-                                            flex: 5,
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                right: 10,
-                                              ),
-                                              child: TextFormField(
-                                                controller:
-                                                    _sessionTitleController,
-                                                decoration: InputDecoration(
-                                                  hintText: 'Session title...',
-                                                  border: OutlineInputBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          12,
-                                                        ),
-                                                  ),
-                                                ),
+                                          TextFormField(
+                                            controller: _sessionTitleController,
+                                            decoration: InputDecoration(
+                                              hintText: 'Session title...',
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
                                               ),
                                             ),
                                           ),
-                                          Expanded(
-                                            flex: 3,
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                right: 10,
-                                              ),
-                                              child: TextFormField(
-                                                readOnly: true,
-                                                controller:
-                                                    _sessionDateController,
-                                                onTap: _pickSessionDate,
-                                                decoration: InputDecoration(
-                                                  hintText: 'Date',
-                                                  border: OutlineInputBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          12,
-                                                        ),
-                                                  ),
-                                                ),
+                                          const SizedBox(height: 10),
+                                          TextFormField(
+                                            readOnly: true,
+                                            controller: _sessionDateController,
+                                            onTap: _pickSessionDate,
+                                            decoration: InputDecoration(
+                                              hintText: 'Date',
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
                                               ),
                                             ),
                                           ),
-                                          Expanded(
-                                            flex: 2,
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                right: 10,
+                                          const SizedBox(height: 10),
+                                          DropdownButtonFormField<int>(
+                                            isExpanded: true,
+                                            initialValue:
+                                                _sessionDurationMinutes,
+                                            items:
+                                                const [
+                                                      30,
+                                                      60,
+                                                      90,
+                                                      120,
+                                                      150,
+                                                      180,
+                                                    ]
+                                                    .map(
+                                                      (d) => DropdownMenuItem(
+                                                        value: d,
+                                                        child: Text(
+                                                          d == 120
+                                                              ? '2 hrs'
+                                                              : d == 150
+                                                              ? '2.5 hrs'
+                                                              : d == 180
+                                                              ? '3 hrs'
+                                                              : '$d min',
+                                                        ),
+                                                      ),
+                                                    )
+                                                    .toList(),
+                                            onChanged: (v) {
+                                              if (v == null) return;
+                                              setState(
+                                                () =>
+                                                    _sessionDurationMinutes = v,
+                                              );
+                                            },
+                                            decoration: InputDecoration(
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
                                               ),
-                                              child: DropdownButtonFormField<int>(
-                                                initialValue:
-                                                    _sessionDurationMinutes,
-                                                items:
-                                                    const [
-                                                          30,
-                                                          60,
-                                                          90,
-                                                          120,
-                                                          150,
-                                                          180,
-                                                        ]
-                                                        .map(
-                                                          (
-                                                            d,
-                                                          ) => DropdownMenuItem(
-                                                            value: d,
-                                                            child: Text(
-                                                              d == 120
-                                                                  ? '2 hrs'
-                                                                  : d == 150
-                                                                  ? '2.5 hrs'
-                                                                  : d == 180
-                                                                  ? '3 hrs'
-                                                                  : '$d min',
+                                            ),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Align(
+                                            alignment: Alignment.centerRight,
+                                            child: SizedBox(
+                                              width: 120,
+                                              child: ElevatedButton(
+                                                onPressed: _canAddSession
+                                                    ? () {
+                                                        final title =
+                                                            _sessionTitleController
+                                                                .text
+                                                                .trim();
+                                                        if (title.isEmpty ||
+                                                            _sessionDate ==
+                                                                null) {
+                                                          return;
+                                                        }
+
+                                                        final scheduledAt =
+                                                            DateTime(
+                                                              _sessionDate!
+                                                                  .year,
+                                                              _sessionDate!
+                                                                  .month,
+                                                              _sessionDate!.day,
+                                                              18,
+                                                              0,
+                                                            );
+
+                                                        setState(() {
+                                                          _scheduledSessions.add(
+                                                            StudySessionDraft(
+                                                              title: title,
+                                                              scheduledAt:
+                                                                  scheduledAt,
+                                                              durationMinutes:
+                                                                  _sessionDurationMinutes,
                                                             ),
+                                                          );
+                                                          _sessionTitleController
+                                                              .clear();
+                                                          _sessionDate = null;
+                                                          _sessionDateController
+                                                                  .text =
+                                                              '';
+                                                        });
+                                                      }
+                                                    : null,
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: AppColors
+                                                      .accent
+                                                      .withValues(alpha: 0.15),
+                                                  foregroundColor:
+                                                      AppColors.primaryBrand,
+                                                  disabledBackgroundColor:
+                                                      AppColors.accent
+                                                          .withValues(
+                                                            alpha: 0.15,
                                                           ),
-                                                        )
-                                                        .toList(),
-                                                onChanged: (v) {
-                                                  if (v == null) return;
-                                                  setState(
-                                                    () =>
-                                                        _sessionDurationMinutes =
-                                                            v,
-                                                  );
-                                                },
-                                                decoration: InputDecoration(
-                                                  border: OutlineInputBorder(
+                                                  disabledForegroundColor:
+                                                      AppColors.primaryBrand,
+                                                  shape: RoundedRectangleBorder(
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                           12,
                                                         ),
                                                   ),
                                                 ),
-                                              ),
-                                            ),
-                                          ),
-                                          SizedBox(
-                                            width: 120,
-                                            child: ElevatedButton(
-                                              onPressed: _canAddSession
-                                                  ? () {
-                                                      final title =
-                                                          _sessionTitleController
-                                                              .text
-                                                              .trim();
-                                                      if (title.isEmpty ||
-                                                          _sessionDate ==
-                                                              null) {
-                                                        return;
-                                                      }
-
-                                                      final scheduledAt =
-                                                          DateTime(
-                                                            _sessionDate!.year,
-                                                            _sessionDate!.month,
-                                                            _sessionDate!.day,
-                                                            18,
-                                                            0,
-                                                          );
-
-                                                      setState(() {
-                                                        _scheduledSessions.add(
-                                                          StudySessionDraft(
-                                                            title: title,
-                                                            scheduledAt:
-                                                                scheduledAt,
-                                                            durationMinutes:
-                                                                _sessionDurationMinutes,
-                                                          ),
-                                                        );
-                                                        _sessionTitleController
-                                                            .clear();
-                                                        _sessionDate = null;
-                                                        _sessionDateController
-                                                                .text =
-                                                            '';
-                                                      });
-                                                    }
-                                                  : null,
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: AppColors
-                                                    .accent
-                                                    .withValues(alpha: 0.15),
-                                                foregroundColor:
-                                                    AppColors.primaryBrand,
-                                                disabledBackgroundColor:
-                                                    AppColors.accent.withValues(
-                                                      alpha: 0.15,
-                                                    ),
-                                                disabledForegroundColor:
-                                                    AppColors.primaryBrand,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                ),
-                                              ),
-                                              child: const Text(
-                                                '+ Add',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.w800,
+                                                child: const Text(
+                                                  '+ Add',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
                                                 ),
                                               ),
                                             ),
