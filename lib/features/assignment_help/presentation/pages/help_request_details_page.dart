@@ -6,7 +6,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../data/models/help_request_model.dart';
 import '../../data/models/help_response_model.dart';
-import 'edit_help_request_page.dart';
 
 class HelpRequestDetailsPage extends StatefulWidget {
   final HelpRequest request;
@@ -189,6 +188,191 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
     }
   }
 
+  // ── Show Edit Dialog ─────────────────────────────
+  void _showEditDialog(HelpRequest request) {
+    final titleController = TextEditingController(text: request.title);
+    final subjectController = TextEditingController(text: request.subject);
+    final descriptionController =
+        TextEditingController(text: request.description);
+    final deadlineController = TextEditingController(
+      text: DateFormat('yyyy-MM-dd').format(request.deadline),
+    );
+    DateTime selectedDeadline = request.deadline;
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: const Row(
+            children: [
+              Icon(Icons.edit_document, color: Color(0xFF0F766E), size: 28),
+              SizedBox(width: 10),
+              Text(
+                'Edit Help Request',
+                style: TextStyle(
+                  color: Color(0xFF134E4A),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: titleController,
+                    decoration: InputDecoration(
+                      labelText: 'Title',
+                      labelStyle: const TextStyle(color: Color(0xFF0F766E)),
+                      filled: true,
+                      fillColor: const Color(0xFFF0FDFA),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      prefixIcon:
+                          const Icon(Icons.title, color: Color(0xFF0F766E)),
+                    ),
+                    validator: (v) =>
+                        v == null || v.isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: subjectController,
+                    decoration: InputDecoration(
+                      labelText: 'Subject',
+                      labelStyle: const TextStyle(color: Color(0xFF0F766E)),
+                      filled: true,
+                      fillColor: const Color(0xFFF0FDFA),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      prefixIcon:
+                          const Icon(Icons.book, color: Color(0xFF0F766E)),
+                    ),
+                    validator: (v) =>
+                        v == null || v.isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: descriptionController,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      labelText: 'Description',
+                      labelStyle: const TextStyle(color: Color(0xFF0F766E)),
+                      filled: true,
+                      fillColor: const Color(0xFFF0FDFA),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      prefixIcon: const Icon(Icons.description,
+                          color: Color(0xFF0F766E)),
+                    ),
+                    validator: (v) =>
+                        v == null || v.length < 10 ? 'Min 10 chars' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: deadlineController,
+                    readOnly: true,
+                    onTap: () async {
+                      final now = DateTime.now();
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDeadline,
+                        firstDate: now,
+                        lastDate: now.add(const Duration(days: 365)),
+                      );
+                      if (picked != null) {
+                        setDialogState(() {
+                          selectedDeadline = picked;
+                          deadlineController.text =
+                              DateFormat('yyyy-MM-dd').format(picked);
+                        });
+                      }
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Deadline',
+                      labelStyle: const TextStyle(color: Color(0xFF0F766E)),
+                      filled: true,
+                      fillColor: const Color(0xFFF0FDFA),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      prefixIcon: const Icon(Icons.calendar_today,
+                          color: Color(0xFF0F766E)),
+                      suffixIcon: const Icon(Icons.arrow_drop_down,
+                          color: Color(0xFF0F766E)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (formKey.currentState!.validate()) {
+                  try {
+                    await _requestRef.update({
+                      'title': titleController.text.trim(),
+                      'subject': subjectController.text.trim(),
+                      'description': descriptionController.text.trim(),
+                      'deadline': Timestamp.fromDate(selectedDeadline),
+                    });
+                    if (mounted) {
+                      setState(() {
+                        request.title = titleController.text.trim();
+                        request.subject = subjectController.text.trim();
+                        request.description = descriptionController.text.trim();
+                        request.deadline = selectedDeadline;
+                      });
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Request updated successfully!'),
+                          backgroundColor: Color(0xFF0F766E),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Update failed: $e')),
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0F766E),
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: const Text('Save Changes'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final request = widget.request;
@@ -246,15 +430,7 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
                 ),
                 icon: const Icon(Icons.edit),
                 tooltip: 'Edit',
-                onPressed: () async {
-                  final updated = await Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          EditHelpRequestPage(request: request),
-                    ),
-                  );
-                  if (updated == true) setState(() {});
-                },
+                onPressed: () => _showEditDialog(request),
               ),
             ),
           if (isOwner)
@@ -285,13 +461,13 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
                 children: [
                   // ── Request card ──
                   Card(
-                    color: const Color(0xFFFFFFFF),
+                    color: const Color(0xFFF5FBF7),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                       side: BorderSide(
-                        color: const Color(0xFFDDEEE4),
-                        width: 1,
+                        color: const Color(0xFFBAD8C1),
+                        width: 1.4,
                       ),
                     ),
                     child: Padding(
@@ -334,13 +510,15 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
                             ],
                           ),
                           const SizedBox(height: 14),
-                          Wrap(
-                            spacing: 16,
-                            runSpacing: 6,
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _metaText('Owner', request.ownerName),
+                              const SizedBox(height: 8),
                               _metaText('Subject', request.subject),
+                              const SizedBox(height: 8),
                               _metaText('Deadline', deadlineStr),
+                              const SizedBox(height: 8),
                               _metaText('Comments', '$_commentCount'),
                             ],
                           ),
@@ -522,11 +700,11 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
               children: [
                 CircleAvatar(
                   radius: 16,
-                  backgroundColor: const Color(0xFFDDF5EB),
+                  backgroundColor: const Color(0xFFE5E7EB),
                   child: Text(
                     avatarChar,
                     style: const TextStyle(
-                        color: Color(0xFF0F766E),
+                        color: Color(0xFF334155),
                         fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -534,19 +712,19 @@ class _HelpRequestDetailsPageState extends State<HelpRequestDetailsPage> {
                 Text(displayName,
                     style: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F766E))),
+                        color: Color(0xFF334155))),
                 if (r.isOwner)
                   Container(
                     margin: const EdgeInsets.only(left: 8),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFE4E6),
+                      color: const Color(0xFFE2E8F0),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Text('OWNER',
+                    child: const Text('Owner',
                         style: TextStyle(
-                            color: Color(0xFFB91C1C),
+                            color: Color(0xFF334155),
                             fontSize: 11,
                             fontWeight: FontWeight.bold)),
                   ),
