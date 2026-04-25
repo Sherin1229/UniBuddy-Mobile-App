@@ -16,20 +16,9 @@ class _EditHelpRequestPageState extends State<EditHelpRequestPage> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late TextEditingController _deadlineController;
-  late String _selectedSubject;
+  late TextEditingController _subjectController;
   final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;
-
-  final List<String> _subjects = [
-    'Database Systems',
-    'Programming',
-    'Mathematics',
-    'Physics',
-    'Chemistry',
-    'Biology',
-    'English',
-    'Other',
-  ];
 
   @override
   void initState() {
@@ -41,7 +30,8 @@ class _EditHelpRequestPageState extends State<EditHelpRequestPage> {
     _deadlineController = TextEditingController(
         text: DateFormat('yyyy-MM-dd')
             .format(widget.request.deadline));
-    _selectedSubject = widget.request.subject;
+    _subjectController =
+        TextEditingController(text: widget.request.subject);
   }
 
   @override
@@ -49,6 +39,7 @@ class _EditHelpRequestPageState extends State<EditHelpRequestPage> {
     _titleController.dispose();
     _descriptionController.dispose();
     _deadlineController.dispose();
+    _subjectController.dispose();
     super.dispose();
   }
 
@@ -81,17 +72,10 @@ class _EditHelpRequestPageState extends State<EditHelpRequestPage> {
           .doc(widget.request.id)
           .update({
         'title': _titleController.text.trim(),
-        'subject': _selectedSubject,
+        'subject': _subjectController.text.trim(),
         'description': _descriptionController.text.trim(),
         'deadline': Timestamp.fromDate(newDeadline),
       });
-
-      // Update local object too
-      widget.request.title = _titleController.text.trim();
-      widget.request.subject = _selectedSubject;
-      widget.request.description =
-          _descriptionController.text.trim();
-      widget.request.deadline = newDeadline;
 
       if (mounted) {
         Navigator.of(context).pop(true);
@@ -132,20 +116,14 @@ class _EditHelpRequestPageState extends State<EditHelpRequestPage> {
                     : null,
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedSubject,
-                items: _subjects
-                    .map((s) => DropdownMenuItem(
-                        value: s, child: Text(s)))
-                    .toList(),
-                onChanged: (v) =>
-                    setState(() => _selectedSubject = v!),
+              TextFormField(
+                controller: _subjectController,
                 decoration: const InputDecoration(
                   labelText: 'Subject',
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) =>
-                    v == null || v.isEmpty ? 'Required' : null,
+                    v == null || v.trim().isEmpty ? 'Subject is required' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
